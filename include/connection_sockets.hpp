@@ -1,7 +1,7 @@
 #pragma once
+
 #include <cstdint>
 #include <string>
-
 
 
 // Max backlog size for listen function. 10 is for tests. 128 or 4096 for production.
