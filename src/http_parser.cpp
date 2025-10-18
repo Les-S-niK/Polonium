@@ -3,12 +3,7 @@
 #include "../include/http_parsing/http_parser_exceptions.hpp"
 
 // TODO: Add getJson method for HttpParser and make it's implementation in the .cpp file.
-/**
- * @brief Construct a new Http Response Parser object. 
- * This class parses HTTP responses.
- * 
- * @param response
- */
+
 HttpResponseParser::HttpResponseParser(const std::string& response) : response(response) {
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_RESPONSE, &settings);
@@ -55,12 +50,6 @@ void HttpResponseParser::parse() {
 }
 
 
-/**
- * @brief Construct a new Http Request Parser object. 
- * This class parses HTTP requests.
- * 
- * @param request 
- */
 HttpRequestParser::HttpRequestParser(const std::string& request) : request(request) {
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_REQUEST, &settings);

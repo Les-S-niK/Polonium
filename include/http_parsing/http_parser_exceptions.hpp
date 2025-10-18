@@ -6,6 +6,11 @@
 #include "../../third_party/llhttp/llhttp.h"
 
 
+/**
+ * @brief LlhttpBadErrno is exception that represents llttp errnos in readable form.
+ * You should throw it when llhttp sets bad errno.
+ * 
+ */
 class LlhttpBadErrno : public std::exception
 {
     public:
