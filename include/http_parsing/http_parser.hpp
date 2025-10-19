@@ -5,8 +5,11 @@
 #include <unordered_map>
 
 #include "../../third_party/llhttp/llhttp.h"
+#include "../../third_party/nlohman_json/json.hpp"
 
-// TODO: Add getJson method for HttpParser and make it's implementation in the .cpp file.
+
+using json = nlohmann::json;
+
 /**
  * @brief HttpParser is a virtual class. It contains the general data and methods
  * for HttpRequestParser and HttpResponseParser classes.
@@ -51,6 +54,13 @@ class HttpParser
          */
         virtual void clear() {}
 
+        /**
+         * @brief Get the Json object from the HTTP body.
+         * 
+         * @return json (nlohmann::json). Return an empty json if parser can't parse the body.
+         */
+        virtual json getJson() { return json{}; }
+
     protected:
         /**
          * @brief Set the Llhttp Callback functions. 
@@ -77,6 +87,7 @@ class HttpResponseParser : public HttpParser
         HttpResponseParser(const std::string& response);
         ~HttpResponseParser();
         void clear() override final;
+        json getJson() override final;
         
     private:
         llhttp_t parser;
@@ -101,7 +112,8 @@ class HttpRequestParser : public HttpParser
         HttpRequestParser(const std::string& request);
         ~HttpRequestParser();
         void clear() override final;
-        
+        json getJson() override final;
+    
     private:
         llhttp_t parser;
         llhttp_settings_t settings;
@@ -109,7 +121,6 @@ class HttpRequestParser : public HttpParser
 
         void setCallbacks() override final;
         void parse() override final;
-        
 };
 
 

@@ -1,8 +1,8 @@
 
 #include "../include/http_parsing/http_parser.hpp"
 #include "../include/http_parsing/http_parser_exceptions.hpp"
+#include <cstddef>
 
-// TODO: Add getJson method for HttpParser and make it's implementation in the .cpp file.
 
 HttpResponseParser::HttpResponseParser(const std::string& response) : response(response) {
     llhttp_settings_init(&settings);
@@ -49,6 +49,14 @@ void HttpResponseParser::parse() {
     }
 }
 
+json HttpResponseParser::getJson() {
+    if (!json::accept(body)) {
+        /* Return an empty json */
+        return json{};
+    }
+    return json::parse(body);
+}
+
 
 HttpRequestParser::HttpRequestParser(const std::string& request) : request(request) {
     llhttp_settings_init(&settings);
@@ -93,6 +101,14 @@ void HttpRequestParser::clear() {
     body.clear();
     temporary_pair.first.clear();
     temporary_pair.second.clear();
+}
+
+json HttpRequestParser::getJson() {
+    if (!json::accept(body)) {
+        /* Return an empty json */
+        return json{};
+    }
+    return json::parse(body);
 }
 
 
