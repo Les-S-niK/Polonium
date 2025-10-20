@@ -1,7 +1,9 @@
 #pragma once
 
+#include <vector>
 #include <cstdint>
 #include <string>
+#include <sys/types.h>
 
 
 // Max backlog size for listen function. 10 is for tests. 128 or 4096 for production.
@@ -19,7 +21,7 @@ class Sockets
             std::string ipv4_host = "0.0.0.0"
         );
 
-        void acceptConnection();
+        std::vector<std::byte> acceptConnection();
 
     
     private:

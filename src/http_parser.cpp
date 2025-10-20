@@ -4,7 +4,7 @@
 #include <cstddef>
 
 
-HttpResponseParser::HttpResponseParser(const std::string& response) : response(response) {
+HttpResponseParser::HttpResponseParser(const std::vector<std::byte>& response) : response(response) {
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_RESPONSE, &settings);
     // Set <parser.data> to manage current class instance in the handlers.
@@ -43,7 +43,7 @@ void HttpResponseParser::clear() {
 
 void HttpResponseParser::parse() {
     enum llhttp_errno error_num = llhttp_execute(
-        &parser, response.c_str(), response.length());    
+        &parser, reinterpret_cast<const char *>(response.data()), response.size());    
     if(error_num != 0) {
         throw LlhttpBadErrno("There is an error while executing llhttp parser.", error_num);
     }
@@ -58,7 +58,7 @@ json HttpResponseParser::getJson() {
 }
 
 
-HttpRequestParser::HttpRequestParser(const std::string& request) : request(request) {
+HttpRequestParser::HttpRequestParser(const std::vector<std::byte>& request) : request(request) {
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_REQUEST, &settings);
     // Set <parser.data> to manage current class instance in the handlers.
@@ -86,7 +86,7 @@ void HttpRequestParser::setCallbacks() {
 
 void HttpRequestParser::parse() {
     enum llhttp_errno error_num = llhttp_execute(
-        &parser, request.c_str(), request.length());    
+        &parser, reinterpret_cast<const char *>(request.data()), request.size());    
     if(error_num != 0) {
         throw LlhttpBadErrno("There is an error while executing llhttp parser.", error_num);
     }

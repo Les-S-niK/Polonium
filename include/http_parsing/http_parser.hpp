@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "../../third_party/llhttp/llhttp.h"
 #include "../../third_party/nlohman_json/json.hpp"
@@ -84,7 +85,7 @@ class HttpResponseParser : public HttpParser
         uint16_t status_code;
         std::string status_text;
 
-        HttpResponseParser(const std::string& response);
+        HttpResponseParser(const std::vector<std::byte>& response);
         ~HttpResponseParser();
         void clear() override final;
         json getJson() override final;
@@ -92,7 +93,7 @@ class HttpResponseParser : public HttpParser
     private:
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::string response;
+        const std::vector<std::byte> response;
 
         void setCallbacks() override final;
         void parse() override final;
@@ -109,7 +110,7 @@ class HttpRequestParser : public HttpParser
         std::string method;
         std::string uri;
 
-        HttpRequestParser(const std::string& request);
+        HttpRequestParser(const std::vector<std::byte>& request);
         ~HttpRequestParser();
         void clear() override final;
         json getJson() override final;
@@ -117,7 +118,7 @@ class HttpRequestParser : public HttpParser
     private:
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::string request;
+        const std::vector<std::byte> request;
 
         void setCallbacks() override final;
         void parse() override final;
