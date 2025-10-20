@@ -14,15 +14,19 @@ set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_library(
     Polonium STATIC
         ${SRC_PATH}/connection_sockets.cpp
+        ${SRC_PATH}/http_parser.cpp
 )
 target_include_directories(Polonium PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/http_parsing
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohman_json
 )
 
 add_library(
     libhttp STATIC
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/llhttp.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/http.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/api.c
 )
 target_include_directories(
     libhttp PUBLIC 

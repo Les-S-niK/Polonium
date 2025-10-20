@@ -1,4 +1,6 @@
 
+#include <array>
+#include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,7 +21,7 @@ Sockets::Sockets(
     bindSocket();
 }
 
-void Sockets::acceptConnection() {
+std::vector<std::byte> Sockets::acceptConnection() {
     struct sockaddr_in client_addr_in;
     socklen_t client_socklen = sizeof(client_addr_in);
     listen(fd, max_backlog_size);
@@ -31,9 +33,15 @@ void Sockets::acceptConnection() {
             // TODO: Make exception class and throw it.
             throw "Can't get client fd";
         }
-        // TODO: Add recv, and send function calls. 
-
+        // TODO: Add recv, and send function calls.
+        // This code is a very simple parser test.
+        std::vector<std::byte> buffer;
+        std::array<std::byte, 8192> arr{}; 
+        recv(client_fd, &arr, arr.size(), 0);
+        buffer.insert(buffer.end(), arr.begin(), arr.end());
         close(client_fd);
+
+        return buffer;
     }
 }
 
