@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include <cstdint>
 #include <string>
 #include <sys/types.h>
@@ -21,11 +20,10 @@ class Sockets
             std::string ipv4_host = "0.0.0.0"
         );
 
-        std::vector<std::byte> acceptConnection();
+        void acceptConnection();
 
     
     private:
-        int client_fd;
         uint16_t port;
         std::string host;
 
