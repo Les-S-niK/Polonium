@@ -14,6 +14,7 @@
 
 #include "../include/connection_sockets.hpp"
 #include "../include/http_parsing/http_parser.hpp"
+#include "http.hpp"
 
 
 // TODO: Implement IPv6 support in future.
@@ -42,8 +43,8 @@ void Sockets::acceptConnection() {
         }
         // TODO: Add recv, and send function calls.
         // TODO: Make thread-per-connection server model.
-        std::thread([client_fd](){
-            std::vector<std::byte> buffer(8192);
+        std::thread([this, client_fd](){
+            std::vector<std::byte> buffer(max_buffer_size);
             
             size_t recieved_size = recv(client_fd, buffer.data(), buffer.size(), 0);
             if(recieved_size == -1) {
@@ -52,12 +53,25 @@ void Sockets::acceptConnection() {
             }
             buffer.resize(recieved_size);
             
-            HttpRequestParser request_parser(buffer);
+            HttpRequest request;
+            HttpRequestParser request_parser(buffer, request);
             size_t content_length = 0;
-            if(request_parser.headers.find("Content-Length") != request_parser.headers.end()) {
-                content_length = std::stoul(request_parser.headers.at("Content-Length"));
+            if(request.headers.find("Content-Length") != request.headers.end()) {
+                content_length = std::stoul(request.headers.at("Content-Length"));
             }
+            std::cout << request.method << std::endl;
+            std::cout << request.getJson() << std::endl;
             // TODO: Check content length and compare it with the current body length.
+            while(request.body.length() < content_length) {
+                // TODO: Recieve other body parts
+            }
+            /*
+             * HTTP packet recieved. Now we need to check if endpoint of the packet is in the 
+             * routes table.
+             */
+            
+
+
             close(client_fd);
         }).detach();
     }

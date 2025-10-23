@@ -13,7 +13,7 @@ class Sockets
 {
     // TODO: Implement IPv6 support in future.
     public:
-        int fd;
+        size_t max_buffer_size = 8192;
 
         Sockets(
             uint16_t port,
@@ -24,6 +24,7 @@ class Sockets
 
     
     private:
+        int fd;
         uint16_t port;
         std::string host;
 
