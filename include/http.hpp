@@ -12,6 +12,8 @@ using json = nlohmann::json;
 class HttpAction 
 {
     public:
+        virtual ~HttpAction() = default;
+
         /**
          * @brief Main protocol name. (HTTP)
          */
@@ -46,8 +48,6 @@ class HttpAction
             }
             return json::parse(body);
         }
-
-        ~HttpAction() = default;
 };
 
 

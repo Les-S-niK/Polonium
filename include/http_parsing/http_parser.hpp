@@ -117,7 +117,12 @@ class HttpResponseParser : public HttpParser
     public:
         HttpResponse& response;
         HttpResponseParser(const std::vector<std::byte>& raw_response, HttpResponse& response);
+        HttpResponseParser(const HttpResponseParser&) = delete;
+        HttpResponseParser(HttpResponseParser&&) = delete;
+        HttpResponseParser operator=(const HttpResponseParser&) = delete;
+        HttpResponseParser operator=(HttpResponseParser&&) = delete;
         ~HttpResponseParser();
+
         void clear() override final;
         
     private:
@@ -157,7 +162,12 @@ class HttpRequestParser : public HttpParser
     public:
         HttpRequest& request;
         HttpRequestParser(const std::vector<std::byte>& raw_request, HttpRequest& request);
+        HttpRequestParser(const HttpRequestParser&) = delete;
+        HttpRequestParser(HttpRequestParser&&) = delete;
+        HttpRequestParser operator=(const HttpRequestParser&) = delete;
+        HttpRequestParser operator=(HttpRequestParser&&) = delete;
         ~HttpRequestParser();
+
         void clear() override final;
     
     private:
