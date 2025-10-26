@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "../../third_party/llhttp/llhttp.h"
-#include "./http.hpp"
+#include "llhttp.h"
+#include "http.hpp"
 
 
 /**
@@ -115,8 +115,7 @@ class HttpParser
 class HttpResponseParser : public HttpParser
 {
     public:
-        HttpResponse& response;
-        HttpResponseParser(const std::vector<std::byte>& raw_response, HttpResponse& response);
+        HttpResponseParser(const std::vector<std::byte> raw_response);
         HttpResponseParser(const HttpResponseParser&) = delete;
         HttpResponseParser(HttpResponseParser&&) = delete;
         HttpResponseParser operator=(const HttpResponseParser&) = delete;
@@ -124,11 +123,13 @@ class HttpResponseParser : public HttpParser
         ~HttpResponseParser();
 
         void clear() override final;
+        HttpResponse getParsed();
         
     private:
+        HttpResponse response;
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::vector<std::byte>& raw_response;
+        const std::vector<std::byte> raw_response;
 
         void setCallbacks() override final;
         void parse() override final;
@@ -160,8 +161,7 @@ class HttpResponseParser : public HttpParser
 class HttpRequestParser : public HttpParser
 {
     public:
-        HttpRequest& request;
-        HttpRequestParser(const std::vector<std::byte>& raw_request, HttpRequest& request);
+        HttpRequestParser(const std::vector<std::byte> raw_request);
         HttpRequestParser(const HttpRequestParser&) = delete;
         HttpRequestParser(HttpRequestParser&&) = delete;
         HttpRequestParser operator=(const HttpRequestParser&) = delete;
@@ -169,11 +169,13 @@ class HttpRequestParser : public HttpParser
         ~HttpRequestParser();
 
         void clear() override final;
+        HttpRequest getParsed();
     
     private:
+        HttpRequest request;
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::vector<std::byte>& raw_request;
+        const std::vector<std::byte> raw_request;
 
         void setCallbacks() override final;
         void parse() override final;

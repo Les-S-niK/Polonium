@@ -1,5 +1,7 @@
 
+#include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <string>
 #include <thread>
 #include <vector>
@@ -9,11 +11,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// FIXME: DELETE this include:
+// FIXME: REMOVE this include after development is complete:
 #include <iostream>
 
-#include "../include/connection_sockets.hpp"
-#include "../include/http_parsing/http_parser.hpp"
+#include "sockets/connection_sockets.hpp"
+#include "sockets/socket_exceptions.hpp"
+#include "http_parsing/http_parser.hpp"
 #include "http.hpp"
 
 
@@ -33,45 +36,34 @@ void Sockets::acceptConnection() {
     struct sockaddr_in client_addr_in{};
     socklen_t client_socklen = sizeof(client_addr_in);
     listen(fd, max_backlog_size);
+
     // TODO: Make reasonable condition in future.
     while(true) {
         int client_fd = accept(fd, (struct sockaddr *) &client_addr_in, &client_socklen);
-        if(client_fd == -1) {http://
-            close(client_fd);
-            // TODO: Make exception class and throw it.
-            throw "Can't get client fd";
-        }
-        // TODO: Add recv, and send function calls.
-        // TODO: Make thread-per-connection server model.
-        std::thread([this, client_fd](){
+        closeSocketOnError(client_fd, "Can't correctly accept client_fd from the socket.");
+        
+        // Create a new thread per connetion.
+        std::thread([this, client_fd, client_addr_in](){
             std::vector<std::byte> buffer(max_buffer_size);
             
-            size_t recieved_size = recv(client_fd, buffer.data(), buffer.size(), 0);
-            if(recieved_size == -1) {
-                // TODO: Make exception class and throw it here.
-                throw "Can't recieve data.";
-            }
-            buffer.resize(recieved_size);
-            
-            HttpRequest request;
-            HttpRequestParser request_parser(buffer, request);
+            ssize_t received_size = recv(client_fd, buffer.data(), buffer.size(), 0);
+            closeSocketOnError(received_size, client_fd, "Can't correctly receive data from the client socket.", client_addr_in);
+            buffer.resize(received_size);
+
+            HttpRequest request = HttpRequestParser(std::move(buffer)).getParsed();
             size_t content_length = 0;
             if(request.headers.find("Content-Length") != request.headers.end()) {
-                content_length = std::stoul(request.headers.at("Content-Length"));
+                content_length = std::stoi(request.headers.at("Content-Length"));
             }
-            std::cout << request.method << std::endl;
-            std::cout << request.getJson() << std::endl;
-            // TODO: Check content length and compare it with the current body length.
+
             while(request.body.length() < content_length) {
-                // TODO: Recieve other body parts
+                // TODO: Receive other body parts
             }
             /*
-             * HTTP packet recieved. Now we need to check if endpoint of the packet is in the 
+             * HTTP packet received. Now we need to check if endpoint of the packet is in the 
              * routes table.
              */
             
-
-
             close(client_fd);
         }).detach();
     }
@@ -83,20 +75,15 @@ inline void Sockets::bindSocket() {
     addr_in.sin_port = htons(port);
     addr_in.sin_family = AF_INET; 
     inet_aton(host.c_str(), &addr_in.sin_addr);
-
-    if(bind(fd, (const struct sockaddr *) &addr_in, sizeof(addr_in)) == -1) {
-        close(fd);
-        // TODO: Make exception class and throw it.
-        throw "Can't bind socket.";
-    }
+    
+    closeSocketOnError(
+        bind(fd, (const struct sockaddr *) &addr_in, sizeof(addr_in)),
+        fd, "Can't correctly bind socket.", addr_in
+    );
 }
 
 inline void Sockets::initSocket() {
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(fd == -1) {
-        close(fd);
-        // TODO: Make exception class and throw it.
-        throw "Can't create TCP socket.";
-    } 
+    closeSocketOnError(fd, fd, "Can't correctly create TCP/IPv4 socket");
 }
 

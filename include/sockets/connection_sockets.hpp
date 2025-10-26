@@ -6,7 +6,7 @@
 
 
 // Max backlog size for listen function. 10 is for tests. 128 or 4096 for production.
-static uint8_t max_backlog_size = 10;
+constexpr inline uint8_t max_backlog_size = 10;
 
 
 class Sockets

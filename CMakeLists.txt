@@ -19,6 +19,7 @@ add_library(
 target_include_directories(Polonium PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/http_parsing
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sockets
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohman_json
 )
 

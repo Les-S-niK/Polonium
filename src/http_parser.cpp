@@ -1,19 +1,14 @@
 
 #include <cstddef>
 
-#include "../include/http_parsing/http_parser.hpp"
-#include "../include/http_parsing/http_parser_exceptions.hpp"
+#include "http_parsing/http_parser.hpp"
+#include "http_parsing/http_parser_exceptions.hpp"
 #include "http.hpp"
 
 
 
-HttpResponseParser::HttpResponseParser(
-    const std::vector<std::byte>& raw_response,
-    HttpResponse& response
-) : 
-    raw_response(raw_response),
-    response(response)
-{
+HttpResponseParser::HttpResponseParser(const std::vector<std::byte> raw_response) : raw_response(raw_response) {
+    response = HttpResponse();
     http_parsed = &response;
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_RESPONSE, &settings);
@@ -56,18 +51,17 @@ void HttpResponseParser::parse() {
     enum llhttp_errno error_num = llhttp_execute(
         &parser, static_cast<const char*>(static_cast<const void*>(raw_response.data())), raw_response.size());    
     if(error_num != 0) {
-        throw LlhttpBadErrno("There is an error while executing llhttp parser.", error_num);
+        throw llhttp_bad_errno("There is an error while executing llhttp parser.", error_num);
     }
 }
 
+HttpResponse HttpResponseParser::getParsed() {
+    return response;
+}
 
-HttpRequestParser::HttpRequestParser(
-    const std::vector<std::byte>& raw_request,
-    HttpRequest& request
-) : 
-    raw_request(raw_request),
-    request(request)
-{
+
+HttpRequestParser::HttpRequestParser(const std::vector<std::byte> raw_request) : raw_request(raw_request) {
+    request = HttpRequest();
     http_parsed = &request;
     llhttp_settings_init(&settings);
     llhttp_init(&parser, HTTP_REQUEST, &settings);
@@ -94,14 +88,6 @@ void HttpRequestParser::setCallbacks() {
     settings.on_body = handler_on_body;
 }
 
-void HttpRequestParser::parse() {
-    enum llhttp_errno error_num = llhttp_execute(
-        &parser, static_cast<const char*>(static_cast<const void*>(raw_request.data())), raw_request.size());    
-    if(error_num != 0) {
-        throw LlhttpBadErrno("There is an error while executing llhttp parser.", error_num);
-    }
-}
-
 void HttpRequestParser::clear() {
     request.method.clear();
     request.uri.clear();
@@ -111,6 +97,18 @@ void HttpRequestParser::clear() {
     request.body.clear();
     temporary_pair.first.clear();
     temporary_pair.second.clear();
+}
+
+void HttpRequestParser::parse() {
+    enum llhttp_errno error_num = llhttp_execute(
+        &parser, static_cast<const char*>(static_cast<const void*>(raw_request.data())), raw_request.size());    
+    if(error_num != 0) {
+        throw llhttp_bad_errno("There is an error while executing llhttp parser.", error_num);
+    }
+}
+
+HttpRequest HttpRequestParser::getParsed() {
+    return request;
 }
 
 
