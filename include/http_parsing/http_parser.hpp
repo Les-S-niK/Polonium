@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -14,12 +15,20 @@
 class HttpParser
 {
     public:
+        bool is_complete;
+        bool is_keep_alive;
+        size_t parsed_bytes = 0;
+
         virtual ~HttpParser() = default;
 
         /**
          * @brief Set all the class fields to the default values.
          */
         virtual void clear() = 0;
+
+        virtual void feedData(const std::vector<std::byte>& to_accumulate) = 0;
+
+        bool isComplete() const noexcept { return is_complete; }
 
     protected:  
         HttpAction* http_parsed;
@@ -38,12 +47,17 @@ class HttpParser
         virtual void setCallbacks() = 0;
 
         /**
-         * @brief Start Llhttp parser with set callbacks. 
+         * @brief Initial parser method. Do initial stuff like set llhttp settings and etc.
          */
-        virtual void parse() = 0;
+        virtual void initParser() = 0;
 
         /**
-         * @brief Handler start when HTTP packet begins.
+         * @brief Parse all the accumulated HTTP packet.
+         */
+        virtual void parseAccumulated() = 0;
+
+        /**
+         * @brief Handler calls when HTTP packet begins.
          * 
          * @param parser 
          * @return int 
@@ -51,7 +65,7 @@ class HttpParser
         static int handler_on_message_begin(llhttp_t* parser);
 
         /**
-         * @brief Handler starts when llhttp finds protocol type [HTTP for example]
+         * @brief Handler calls when llhttp finds protocol type [HTTP for example]
          * 
          * @param parser 
          * @param at 
@@ -61,7 +75,7 @@ class HttpParser
         static int handler_on_protocol(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp finds protocol version. [1.1; 2; etc... for example]
+         * @brief Handler calls when llhttp finds protocol version. [1.1; 2; etc... for example]
          * 
          * @param parser 
          * @param at 
@@ -71,7 +85,7 @@ class HttpParser
         static int handler_on_protocol_version(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp finds header field [<field>: value];
+         * @brief Handler calls when llhttp finds header field [<field>: value];
          * 
          * @param parser 
          * @param at 
@@ -81,7 +95,7 @@ class HttpParser
         static int handler_on_header_field(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp finds header value [field: <value>];
+         * @brief Handler calls when llhttp finds header value [field: <value>];
          * 
          * @param parser 
          * @param at 
@@ -91,7 +105,7 @@ class HttpParser
         static int handler_on_header_value(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp ends the headers parsing.
+         * @brief Handler calls when llhttp ends the headers parsing.
          * 
          * @param parser 
          * @return int 
@@ -99,12 +113,20 @@ class HttpParser
         static int handler_on_header_value_complete(llhttp_t* parser);
 
         /**
-         * @brief Handler start when Llhttp finds http body.
+         * @brief Handler calls when Llhttp finds http body.
          * 
          * @param parser 
          * @return int 
          */
         static int handler_on_body(llhttp_t* parser, const char* at, size_t length);
+
+        /**
+         * @brief Handler calls when Llhttp ends the parsing.
+         * 
+         * @param parser 
+         * @return int 
+         */
+        static int handler_on_message_complete(llhttp_t* parser);
 };
 
 
@@ -115,7 +137,7 @@ class HttpParser
 class HttpResponseParser : public HttpParser
 {
     public:
-        HttpResponseParser(const std::vector<std::byte> raw_response);
+        HttpResponseParser();
         HttpResponseParser(const HttpResponseParser&) = delete;
         HttpResponseParser(HttpResponseParser&&) = delete;
         HttpResponseParser operator=(const HttpResponseParser&) = delete;
@@ -123,19 +145,22 @@ class HttpResponseParser : public HttpParser
         ~HttpResponseParser();
 
         void clear() override final;
+        void feedData(const std::vector<std::byte>& to_accumulate) override final;
+
         HttpResponse getParsed();
         
     private:
         HttpResponse response;
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::vector<std::byte> raw_response;
+        std::vector<std::byte> raw_response;
 
+        void initParser() override final;
         void setCallbacks() override final;
-        void parse() override final;
+        void parseAccumulated() override final;
 
         /**
-         * @brief Handler starts when llhttp finds Response status text;
+         * @brief Handler calls when llhttp finds Response status text;
          * 
          * @param parser 
          * @param at 
@@ -145,7 +170,7 @@ class HttpResponseParser : public HttpParser
         static int handler_on_status(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp completes the parsing of Response status text;
+         * @brief Handler calls when llhttp completes the parsing of Response status text;
          * 
          * @param parser 
          * @return int 
@@ -161,7 +186,7 @@ class HttpResponseParser : public HttpParser
 class HttpRequestParser : public HttpParser
 {
     public:
-        HttpRequestParser(const std::vector<std::byte> raw_request);
+        HttpRequestParser();
         HttpRequestParser(const HttpRequestParser&) = delete;
         HttpRequestParser(HttpRequestParser&&) = delete;
         HttpRequestParser operator=(const HttpRequestParser&) = delete;
@@ -169,19 +194,21 @@ class HttpRequestParser : public HttpParser
         ~HttpRequestParser();
 
         void clear() override final;
+        void feedData(const std::vector<std::byte>& to_accumulate) override final;
         HttpRequest getParsed();
     
     private:
         HttpRequest request;
         llhttp_t parser;
         llhttp_settings_t settings;
-        const std::vector<std::byte> raw_request;
+        std::vector<std::byte> raw_request;
 
+        void initParser() override final;
         void setCallbacks() override final;
-        void parse() override final;
+        void parseAccumulated() override final;
 
         /**
-         * @brief Handler starts when llhttp finds HTTP method:
+         * @brief Handler calls when llhttp finds HTTP method:
          * [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, CONNECT]
          * 
          * @param parser 
@@ -192,7 +219,7 @@ class HttpRequestParser : public HttpParser
         static int handler_on_method(llhttp_t* parser, const char* at, size_t length);
 
         /**
-         * @brief Handler starts when llhttp finds uri.
+         * @brief Handler calls when llhttp finds uri.
          * 
          * @param parser 
          * @param at

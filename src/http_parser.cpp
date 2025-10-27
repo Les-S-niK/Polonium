@@ -4,19 +4,12 @@
 #include "http_parsing/http_parser.hpp"
 #include "http_parsing/http_parser_exceptions.hpp"
 #include "http.hpp"
+#include "llhttp.h"
 
 
-
-HttpResponseParser::HttpResponseParser(const std::vector<std::byte> raw_response) : raw_response(raw_response) {
-    response = HttpResponse();
-    http_parsed = &response;
-    llhttp_settings_init(&settings);
-    llhttp_init(&parser, HTTP_RESPONSE, &settings);
-    // Set <parser.data> to manage current class instance in the handlers.
-    parser.data = this;
-
-    setCallbacks();
-    parse();
+// HTTP Response parser:
+HttpResponseParser::HttpResponseParser() {
+    initParser();
 }
 
 HttpResponseParser::~HttpResponseParser() {
@@ -33,6 +26,7 @@ void HttpResponseParser::setCallbacks() {
     settings.on_header_value = handler_on_header_value;
     settings.on_header_value_complete = handler_on_header_value_complete;
     settings.on_body = handler_on_body;
+    settings.on_message_complete = handler_on_message_complete;
 }
 
 void HttpResponseParser::clear() {
@@ -42,14 +36,54 @@ void HttpResponseParser::clear() {
     response.version.clear();
     response.headers.clear();
     response.body.clear();
+    raw_response.clear();
     temporary_pair.first.clear();
     temporary_pair.second.clear();
-
+    is_complete = false;
+    is_keep_alive = false;
+    raw_response.clear();
 }
 
-void HttpResponseParser::parse() {
-    enum llhttp_errno error_num = llhttp_execute(
-        &parser, static_cast<const char*>(static_cast<const void*>(raw_response.data())), raw_response.size());    
+void HttpResponseParser::initParser() {
+    clear();
+    response = HttpResponse();
+    http_parsed = &response;
+    llhttp_settings_init(&settings);
+    llhttp_init(&parser, HTTP_RESPONSE, &settings);
+    // Set <parser.data> to manage current class instance in the handlers.
+    parser.data = this;
+
+    setCallbacks();
+}
+
+void HttpResponseParser::feedData(const std::vector<std::byte>& to_accumulate) {
+    raw_response.insert(raw_response.end(), to_accumulate.begin(), to_accumulate.end());
+    parseAccumulated();
+}
+
+void HttpResponseParser::parseAccumulated() {
+    if (is_complete) {
+        if (parsed_bytes < raw_response.size()) {
+            std::vector<std::byte> remaining_data(
+                raw_response.begin() + parsed_bytes, 
+                raw_response.end()
+            );
+            initParser();
+            raw_response = std::move(remaining_data);
+            parsed_bytes = 0;
+            parseAccumulated();
+
+        } else {
+            initParser();
+        }
+        parsed_bytes = raw_response.size();
+    }
+
+    llhttp_errno_t error_num = llhttp_execute(
+        &parser,
+        reinterpret_cast<const char*>(raw_response.data()),
+        raw_response.size()
+    );    
     if(error_num != 0) {
         throw llhttp_bad_errno("There is an error while executing llhttp parser.", error_num);
     }
@@ -60,16 +94,9 @@ HttpResponse HttpResponseParser::getParsed() {
 }
 
 
-HttpRequestParser::HttpRequestParser(const std::vector<std::byte> raw_request) : raw_request(raw_request) {
-    request = HttpRequest();
-    http_parsed = &request;
-    llhttp_settings_init(&settings);
-    llhttp_init(&parser, HTTP_REQUEST, &settings);
-    // Set <parser.data> to manage current class instance in the handlers.
-    parser.data = this;
-
-    setCallbacks();
-    parse();
+// HTTP Request parser:
+HttpRequestParser::HttpRequestParser() {
+    initParser();
 }
 
 HttpRequestParser::~HttpRequestParser() {
@@ -86,6 +113,7 @@ void HttpRequestParser::setCallbacks() {
     settings.on_header_value = handler_on_header_value;
     settings.on_header_value_complete = handler_on_header_value_complete;
     settings.on_body = handler_on_body;
+    settings.on_message_complete = handler_on_message_complete;
 }
 
 void HttpRequestParser::clear() {
@@ -95,13 +123,54 @@ void HttpRequestParser::clear() {
     request.version.clear();
     request.headers.clear();
     request.body.clear();
+    raw_request.clear();
     temporary_pair.first.clear();
     temporary_pair.second.clear();
+    is_complete = false;
+    is_keep_alive = false;
+    raw_request.clear();
 }
 
-void HttpRequestParser::parse() {
-    enum llhttp_errno error_num = llhttp_execute(
-        &parser, static_cast<const char*>(static_cast<const void*>(raw_request.data())), raw_request.size());    
+void HttpRequestParser::initParser() {
+    clear();
+    request = HttpRequest();
+    http_parsed = &request;
+    llhttp_settings_init(&settings);
+    llhttp_init(&parser, HTTP_REQUEST, &settings);
+    // Set <parser.data> to manage current class instance in the handlers.
+    parser.data = this;
+
+    setCallbacks();
+}
+
+void HttpRequestParser::feedData(const std::vector<std::byte>& to_accumulate) {
+    raw_request.insert(raw_request.end(), to_accumulate.begin(), to_accumulate.end());
+    parseAccumulated();
+}
+
+void HttpRequestParser::parseAccumulated() {
+    if (is_complete) {
+        if (parsed_bytes < raw_request.size()) {
+            std::vector<std::byte> remaining_data(
+                raw_request.begin() + parsed_bytes, 
+                raw_request.end()
+            );
+            initParser();
+            raw_request = std::move(remaining_data);
+            parsed_bytes = 0;
+            parseAccumulated();
+
+        } else {
+            initParser();
+        }
+        parsed_bytes = raw_request.size();
+    }
+
+    llhttp_errno_t error_num = llhttp_execute(
+        &parser,
+        reinterpret_cast<const char*>(raw_request.data()),
+        raw_request.size()
+    );    
     if(error_num != 0) {
         throw llhttp_bad_errno("There is an error while executing llhttp parser.", error_num);
     }
@@ -157,6 +226,7 @@ int HttpParser::handler_on_protocol(llhttp_t* parser, const char* at, size_t len
 int HttpParser::handler_on_protocol_version(llhttp_t* parser, const char* at, size_t length) {
     HttpParser* self = static_cast<HttpParser*>(parser->data);
     self->http_parsed->version.append(at, length);
+    self->is_keep_alive = llhttp_should_keep_alive(parser);
     return 0;
 }
 
@@ -182,5 +252,11 @@ int HttpParser::handler_on_header_value_complete(llhttp_t* parser) {
 int HttpParser::handler_on_body(llhttp_t* parser, const char* at, size_t length) {
     HttpParser* self = static_cast<HttpParser*>(parser->data);
     self->http_parsed->body.append(at, length);
+    return 0;
+}
+
+int HttpParser::handler_on_message_complete(llhttp_t* parser) {
+    HttpParser* self = static_cast<HttpParser*>(parser->data);
+    self->is_complete = true;
     return 0;
 }

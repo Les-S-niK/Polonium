@@ -35,7 +35,7 @@ Sockets::Sockets(
 void Sockets::acceptConnection() {
     struct sockaddr_in client_addr_in{};
     socklen_t client_socklen = sizeof(client_addr_in);
-    listen(fd, max_backlog_size);
+    listen(fd, socket_options::max_backlog_size);
 
     // TODO: Make reasonable condition in future.
     while(true) {
@@ -43,29 +43,40 @@ void Sockets::acceptConnection() {
         closeSocketOnError(client_fd, "Can't correctly accept client_fd from the socket.");
         
         // Create a new thread per connetion.
+        // TODO: Add thread-pool.
         std::thread([this, client_fd, client_addr_in](){
-            std::vector<std::byte> buffer(max_buffer_size);
-            
-            ssize_t received_size = recv(client_fd, buffer.data(), buffer.size(), 0);
-            closeSocketOnError(received_size, client_fd, "Can't correctly receive data from the client socket.", client_addr_in);
-            buffer.resize(received_size);
-
-            HttpRequest request = HttpRequestParser(std::move(buffer)).getParsed();
-            size_t content_length = 0;
-            if(request.headers.find("Content-Length") != request.headers.end()) {
-                content_length = std::stoi(request.headers.at("Content-Length"));
-            }
-
-            while(request.body.length() < content_length) {
-                // TODO: Receive other body parts
-            }
-            /*
-             * HTTP packet received. Now we need to check if endpoint of the packet is in the 
-             * routes table.
-             */
+            handleConnection(client_fd, client_addr_in); 
             
             close(client_fd);
         }).detach();
+    }
+}
+
+void Sockets::handleConnection(int client_fd, struct sockaddr_in client_addr_in)  {
+    HttpRequestParser request_parser;
+    std::vector<std::byte> buffer(socket_options::max_buffer_size);
+    
+    while(true) {
+        ssize_t received_size = recv(client_fd, buffer.data(), buffer.size(), 0);
+        closeSocketOnError(received_size, client_fd, "Can't correctly receive data.", client_addr_in);
+        
+        std::vector<std::byte> actual_data(buffer.begin(), buffer.begin() + received_size);
+        request_parser.feedData(actual_data);
+
+        if (request_parser.is_complete) {
+            HttpRequest request = request_parser.getParsed();
+            std::cout << request.method << std::endl;
+            std::cout << request.uri << std::endl;
+            std::cout << request.getJson() << std::endl;
+            // Got request object. Need to check if URI in the routes table.
+            
+            if (request_parser.is_keep_alive) {
+                continue;
+            
+            } else {
+                break;
+            }
+        }
     }
 }
 
@@ -86,4 +97,3 @@ inline void Sockets::initSocket() {
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     closeSocketOnError(fd, fd, "Can't correctly create TCP/IPv4 socket");
 }
-
