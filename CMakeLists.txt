@@ -13,8 +13,8 @@ set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(
     Polonium STATIC
-        ${SRC_PATH}/connection_sockets.cpp
-        ${SRC_PATH}/http_parser.cpp
+        ${SRC_PATH}/connection_handler.cpp
+        ${SRC_PATH}/request_parser.cpp
 )
 target_include_directories(Polonium PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include

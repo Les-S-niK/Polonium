@@ -4,6 +4,12 @@
 #include <netinet/in.h>
 #include <string>
 #include <sys/types.h>
+#include <unistd.h>
+
+#include "tcp_socket.hpp"
+
+
+// TODO: Implement IPv6 support in future.
 
 
 namespace socket_options {
@@ -13,24 +19,29 @@ namespace socket_options {
 }
 
 
-class Sockets
+class ConnectionHandler
 {
-    // TODO: Implement IPv6 support in future.
     public:
-        Sockets(
-            uint16_t port,
-            std::string ipv4_host = "0.0.0.0"
-        );
+        ConnectionHandler(
+            std::string host,
+            uint16_t port
+        ) :
+            host(host),
+            port(port) 
+        {
+            server_fd = ipv4_socket.getServerSocketFd();
+            ipv4_socket.tcp_bind(host, port);
+            ipv4_socket.tcp_listen(socket_options::max_backlog_size);
+        }
 
         void acceptConnection();
 
     
     private:
-        int fd;
+        int server_fd;
+        TcpIpv4Socket ipv4_socket;
         uint16_t port;
         std::string host;
 
-        inline void bindSocket();
-        inline void initSocket();
         void handleConnection(int client_fd, struct sockaddr_in client_addr_in); 
 };

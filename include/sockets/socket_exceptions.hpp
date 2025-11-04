@@ -33,33 +33,3 @@ class socket_exception : public std::exception
     private:
         std::string message;
 };
-
-
-inline void closeSocketOnError(
-    const int& status,
-    const int& fd,
-    std::string message,
-    const struct sockaddr_in& addr_in
-) {
-    if(status == status_error) {
-        close(fd);
-        throw socket_exception(std::move(message), addr_in);
-    }
-}
-
-inline void closeSocketOnError(
-    const int& status,
-    const int& fd,
-    std::string message
-) {
-    if(status == status_error) {
-        close(fd);
-        throw socket_exception(std::move(message));
-    }
-}
-
-inline void closeSocketOnError(const int& status, std::string message) {
-    if(status == status_error) {
-        throw socket_exception(std::move(message));
-    }
-}
