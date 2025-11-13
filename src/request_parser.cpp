@@ -1,3 +1,4 @@
+#include <iostream>
 
 #include "http_parsing/request_parser.hpp"
 #include "http_parsing/request_exceptions.hpp"
@@ -37,7 +38,7 @@ void HttpRequestParser::reset() {
 
 HttpRequestParserStatus HttpRequestParser::feed(const std::string& to_accumulate) {
     parsed_bytes_ = raw_request_.size() - parsed_bytes_;
-    if(to_accumulate.size() > 0) {
+    if(!to_accumulate.empty()) {
         raw_request_.insert(
             raw_request_.end(),
             to_accumulate.begin(),
@@ -51,6 +52,7 @@ HttpRequestParserStatus HttpRequestParser::feed(const std::string& to_accumulate
 HttpRequestParserStatus HttpRequestParser::parseAccumulated() {
     if(is_complete_) return HttpRequestParserStatus::Complete;
 
+    std::cout << std::endl;
     llhttp_errno_t parser_errno = llhttp_execute(
         &parser_,
         raw_request_.data(),
@@ -58,7 +60,7 @@ HttpRequestParserStatus HttpRequestParser::parseAccumulated() {
     );
 
     if(parser_errno != HPE_OK) {
-        throw llhttp_bad_errno("Can't correctly execute llhttp parser.", parser_errno);
+        return HttpRequestParserStatus::Error;
     }
 
     if(is_complete_) {

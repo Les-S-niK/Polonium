@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "../../third_party/nlohman_json/json.hpp"
+#include "json.hpp"
 
 
 using json = nlohmann::json;

@@ -12,6 +12,7 @@ enum class HttpRequestParserStatus
 {
     Complete = 0,
     NeedMore = 1,
+    Error = 2
 };
 
 /**

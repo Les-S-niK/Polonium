@@ -5,8 +5,12 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
+#include <iostream>
 
+#include "http.hpp"
+#include "socket_exceptions.hpp"
 #include "tcp_socket.hpp"
+#include "dispatcher.hpp"
 
 
 // TODO: Implement IPv6 support in future.
@@ -22,6 +26,8 @@ namespace socket_options {
 class ConnectionHandler
 {
     public:
+        Dispatcher dispatcher;
+
         ConnectionHandler(
             std::string host,
             uint16_t port
@@ -30,8 +36,13 @@ class ConnectionHandler
             port(port) 
         {
             server_fd = ipv4_socket.getServerSocketFd();
-            ipv4_socket.tcp_bind(host, port);
-            ipv4_socket.tcp_listen(socket_options::max_backlog_size);
+            try {
+                ipv4_socket.tcp_bind(host, port);
+                ipv4_socket.tcp_listen(socket_options::max_backlog_size);
+            }
+            catch(socket_exception& exception) {
+                std::cout << exception.what() << std::endl;
+            }
         }
 
         void acceptConnection();

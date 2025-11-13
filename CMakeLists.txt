@@ -15,11 +15,13 @@ add_library(
     Polonium STATIC
         ${SRC_PATH}/connection_handler.cpp
         ${SRC_PATH}/request_parser.cpp
+        ${SRC_PATH}/dispatcher.cpp
 )
 target_include_directories(Polonium PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/http_parsing
     ${CMAKE_CURRENT_SOURCE_DIR}/include/sockets
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/routing
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nlohman_json
 )
 
