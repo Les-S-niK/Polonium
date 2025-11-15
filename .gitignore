@@ -1,4 +1,6 @@
 build/
+logs/
+.plog
 .vscode
 .cache
 .github_token

@@ -6,6 +6,7 @@
 
 #include "llhttp.h"
 #include "http.hpp"
+#include "polonium_logger.hpp"
 
 
 enum class HttpRequestParserStatus
@@ -22,29 +23,37 @@ enum class HttpRequestParserStatus
 class HttpRequestParser
 {
     public:
-        HttpRequestParser();
+        HttpRequestParser(PoloniumLogger& logger);
         HttpRequestParser(const HttpRequestParser&) = delete;
         HttpRequestParser(HttpRequestParser&&) = delete;
         HttpRequestParser operator=(const HttpRequestParser&) = delete;
         HttpRequestParser operator=(HttpRequestParser&&) = delete;
-        ~HttpRequestParser() { llhttp_finish(&parser_); };
+        ~HttpRequestParser() {
+            logger_.trace(__func__);
+            llhttp_finish(&parser_);
+        }
 
         void reset();
-        HttpRequestParserStatus feed(const std::string& to_accumulate);
+        HttpRequestParserStatus feed(const std::vector<char>& to_accumulate);
         
         inline const HttpRequest& getRequest() const {
+            logger_.trace(__func__);
             return request_;
         }
         inline bool hasRemainingData() const {
+            logger_.trace(__func__);
             return parsed_bytes_ < raw_request_.size();
         }
         inline bool isComplete() const {
+            logger_.trace(__func__);
             return is_complete_;
         }
         inline bool isKeepAlive() const {
+            logger_.trace(__func__);
             return is_keep_alive_;
         }
         inline void removeParsed() {
+            logger_.trace(__func__);
             raw_request_.erase(raw_request_.begin(), raw_request_.begin() + parsed_bytes_);
         }
     
@@ -56,6 +65,7 @@ class HttpRequestParser
         bool is_complete_ = 0;
         bool is_keep_alive_ = 0;
         size_t parsed_bytes_ = 0;
+        PoloniumLogger& logger_;
 
         /**
          * @brief Temporary pair presents <field: value> in the request headers.

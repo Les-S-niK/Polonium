@@ -10,7 +10,7 @@
 
 #include "connection_handler.hpp"
 #include "request_parser.hpp"
-#include "request_exceptions.hpp"
+// #include "request_exceptions.hpp"
 #include "socket_exceptions.hpp"
 
 
@@ -19,7 +19,7 @@
 void ConnectionHandler::acceptConnection() {
     // TODO: Make reasonable condition in future.
     while(true) {
-        std::pair<socket_fd, struct sockaddr_in> accepted_pair = ipv4_socket.tcp_accept();
+        std::pair<socket_fd, struct sockaddr_in> accepted_pair = ipv4_socket_.tcp_accept();
         // Create a new thread per connetion.
         // TODO: Add thread-pool.
         std::thread([this, accepted_pair](){
@@ -29,13 +29,13 @@ void ConnectionHandler::acceptConnection() {
 }
 
 void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in client_addr_in) {
-    HttpRequestParser request_parser;
+    HttpRequestParser request_parser(logger_);
 
     while(true) {
         std::vector<char> buffer(socket_options::max_buffer_size);
         // TODO: Add exception handling.
         try {
-            buffer = ipv4_socket.tcp_recv(client_fd, socket_options::max_buffer_size);
+            buffer = ipv4_socket_.tcp_recv(client_fd, socket_options::max_buffer_size);
         }
         catch(socket_exception& exception) {
             std::cout << exception.what() << std::endl;
@@ -46,9 +46,7 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             return;
         }
 
-        HttpRequestParserStatus parser_status = request_parser.feed(
-            std::string(buffer.begin(), buffer.begin() + buffer.size())
-        );
+        HttpRequestParserStatus parser_status = request_parser.feed(buffer);
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
@@ -77,10 +75,10 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             // TODO: Add exception handling.
             try {
-                ipv4_socket.tcp_send(client_fd, response_buffer);
+                ipv4_socket_.tcp_send(client_fd, response_buffer);
             }
-            catch(socket_exception& exception) {
-                std::cout << exception.what() << std::endl;
+            catch(socket_exception&) {
+                // std::cout << exception.what() << std::endl;
             }
             
             if(!request_parser.isKeepAlive()) {
