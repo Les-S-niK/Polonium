@@ -1,14 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(
     Polonium
-    VERSION 0.0.1
+    VERSION 0.0.6
     LANGUAGES C CXX    
 )
 
-set(
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-)
+set(CXX_STANDARD 20)
+set(CXX_STANDARD_REQUIRED ON)
 set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(
@@ -16,7 +14,10 @@ add_library(
         ${SRC_PATH}/connection_handler.cpp
         ${SRC_PATH}/request_parser.cpp
         ${SRC_PATH}/dispatcher.cpp
+        ${SRC_PATH}/polonium_logger.cpp
 )
+
+target_compile_features(Polonium PRIVATE cxx_std_20)
 target_include_directories(Polonium PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/http_parsing

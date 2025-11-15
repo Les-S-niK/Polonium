@@ -5,10 +5,9 @@
 #include <string>
 #include <sys/types.h>
 #include <unistd.h>
-#include <iostream>
 
-#include "http.hpp"
-#include "socket_exceptions.hpp"
+// #include "http.hpp"
+#include "polonium_logger.hpp"
 #include "tcp_socket.hpp"
 #include "dispatcher.hpp"
 
@@ -29,30 +28,32 @@ class ConnectionHandler
         Dispatcher dispatcher;
 
         ConnectionHandler(
-            std::string host,
-            uint16_t port
+            std::string host_,
+            uint16_t port_,
+            PoloniumLogger& logger
         ) :
-            host(host),
-            port(port) 
+            host_(host_),
+            port_(port_),
+            logger_(logger),
+            ipv4_socket_(logger),
+            dispatcher(logger)
         {
-            server_fd = ipv4_socket.getServerSocketFd();
-            try {
-                ipv4_socket.tcp_bind(host, port);
-                ipv4_socket.tcp_listen(socket_options::max_backlog_size);
-            }
-            catch(socket_exception& exception) {
-                std::cout << exception.what() << std::endl;
-            }
+            logger_.trace(__func__);
+            logger.info("Connection Handler initialization.");
+            server_fd_ = ipv4_socket_.getServerSocketFd();
+            ipv4_socket_.tcp_bind(host_, port_);
+            ipv4_socket_.tcp_listen(socket_options::max_backlog_size);            
         }
 
         void acceptConnection();
 
     
     private:
-        int server_fd;
-        TcpIpv4Socket ipv4_socket;
-        uint16_t port;
-        std::string host;
+        int server_fd_;
+        TcpIpv4Socket ipv4_socket_;
+        uint16_t port_;
+        std::string host_;
+        PoloniumLogger& logger_;
 
         void handleConnection(int client_fd, struct sockaddr_in client_addr_in); 
 };
