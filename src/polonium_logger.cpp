@@ -33,16 +33,25 @@ void PoloniumLogger::newMessage(
 ) {
     if(log_level_ > message_level) return;
     std::unique_lock<std::mutex> lock(logger_mtx_);
-
     std::string current_time = getCurrentTime(logger_date_formats::log_str_format);
-    std::cout
-        << message_color << current_time << " "
-        << pre_message_text << message
-        << logger_colors::color_default << std::endl;
     
-    log_file_
-        << current_time << " " << pre_message_text
-        << message << std::endl;
+    if (message.find('\n') == std::string_view::npos) {
+        std::cout
+            << message_color << current_time << " "
+            << pre_message_text << message
+            << logger_colors::color_default << std::endl;
+    } 
+    else {
+        std::cout << message_color << current_time << " " << pre_message_text;
+        for(const char& symb : message) {
+            if(symb == '\n')
+                std::cout << logger_colors::color_default << symb << message_color;
+            else 
+                std::cout << symb;
+        }
+        std::cout << logger_colors::color_default << std::endl;
+    }
+    log_file_ << current_time << " " << pre_message_text << message << std::endl;
 }
 
 

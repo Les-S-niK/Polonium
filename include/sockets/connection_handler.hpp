@@ -25,24 +25,23 @@ namespace socket_options {
 class ConnectionHandler
 {
     public:
-        Dispatcher dispatcher;
-
         ConnectionHandler(
-            std::string host_,
-            uint16_t port_,
-            PoloniumLogger& logger
+            std::string host,
+            uint16_t port,
+            PoloniumLogger& logger,
+            Dispatcher& dispatcher
         ) :
-            host_(host_),
-            port_(port_),
+            host_(host),
+            port_(port),
             logger_(logger),
             ipv4_socket_(logger),
-            dispatcher(logger)
+            dispatcher_(dispatcher)
         {
             logger_.trace(__func__);
             logger.info("Connection Handler initialization.");
             server_fd_ = ipv4_socket_.getServerSocketFd();
-            ipv4_socket_.tcp_bind(host_, port_);
-            ipv4_socket_.tcp_listen(socket_options::max_backlog_size);            
+            ipv4_socket_.tcpBind(host_, port_);
+            ipv4_socket_.tcpListen(socket_options::max_backlog_size);            
         }
 
         void acceptConnection();
@@ -53,6 +52,7 @@ class ConnectionHandler
         TcpIpv4Socket ipv4_socket_;
         uint16_t port_;
         std::string host_;
+        Dispatcher& dispatcher_;
         PoloniumLogger& logger_;
 
         void handleConnection(int client_fd, struct sockaddr_in client_addr_in); 

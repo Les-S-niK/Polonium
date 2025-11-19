@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <thread>
+#include <unistd.h>
 #include <vector>
 #include <sys/types.h>
 // FIXME: REMOVE this include after development is complete:
@@ -10,7 +11,6 @@
 
 #include "connection_handler.hpp"
 #include "request_parser.hpp"
-// #include "request_exceptions.hpp"
 #include "socket_exceptions.hpp"
 
 
@@ -19,7 +19,7 @@
 void ConnectionHandler::acceptConnection() {
     // TODO: Make reasonable condition in future.
     while(true) {
-        std::pair<socket_fd, struct sockaddr_in> accepted_pair = ipv4_socket_.tcp_accept();
+        std::pair<socket_fd, struct sockaddr_in> accepted_pair = ipv4_socket_.tcpAccept();
         // Create a new thread per connetion.
         // TODO: Add thread-pool.
         std::thread([this, accepted_pair](){
@@ -33,14 +33,12 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
 
     while(true) {
         std::vector<char> buffer(socket_options::max_buffer_size);
-        // TODO: Add exception handling.
-        try {
-            buffer = ipv4_socket_.tcp_recv(client_fd, socket_options::max_buffer_size);
-        }
-        catch(socket_exception& exception) {
-            std::cout << exception.what() << std::endl;
-        }
 
+        try { buffer = ipv4_socket_.tcpRecv(client_fd, socket_options::max_buffer_size); }
+        catch(socket_exception& exception) {
+            close(client_fd);
+            return;
+        }
         if(buffer.empty()) {
             close(client_fd);
             return;
@@ -50,16 +48,18 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
-            std::optional<std::function<json()>> handler = dispatcher.check_route(request.method, request.uri);
-            
+            std::optional<std::function<json()>> handler = dispatcher_.checkRoute(request.method, request.uri);
+
             std::vector<char> response_buffer;
             if(!handler) {
+                logger_.info("Endpoint did not found.");
                 // TODO: Add Response serialization class.
                 std::string response = "HTTP/1.1 404 NOT FOUND\r\nContent-Length: 0\r\n\r\n";
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
             else {
+                logger_.info("Accepted connection to the existing endpoint.");
                 // TODO: Add Response serialization class.
                 json json_result = handler.value()();
                 std::cout << json_result.dump() << std::endl;
@@ -73,13 +73,8 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
-            // TODO: Add exception handling.
-            try {
-                ipv4_socket_.tcp_send(client_fd, response_buffer);
-            }
-            catch(socket_exception&) {
-                // std::cout << exception.what() << std::endl;
-            }
+            try { ipv4_socket_.tcpSend(client_fd, response_buffer); }
+            catch(socket_exception&) { close(client_fd); }
             
             if(!request_parser.isKeepAlive()) {
                 close(client_fd);
@@ -91,9 +86,8 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             continue;
         }
         else {
-            // TODO: Delete this stub and make better error handling.
-            std::cout << "\033[1;33;41m BAD PARSER HPE \033[0m" << std::endl;
-            continue;
+            close(client_fd);
+            return;
         }
     }
     close(client_fd);
