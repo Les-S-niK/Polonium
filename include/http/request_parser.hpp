@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <string>
-#include <vector>
 
 #include "llhttp.h"
 #include "http.hpp"
@@ -34,7 +33,7 @@ class HttpRequestParser
         }
 
         void reset();
-        HttpRequestParserStatus feed(const std::vector<char>& to_accumulate);
+        HttpRequestParserStatus feed(std::string_view to_accumulate);
         
         inline const HttpRequest& getRequest() const {
             logger_.trace(__func__);
@@ -61,7 +60,7 @@ class HttpRequestParser
         llhttp_t parser_;
         llhttp_settings_t settings_;
         HttpRequest request_;
-        std::vector<char> raw_request_;
+         std::string raw_request_;
         bool is_complete_ = 0;
         bool is_keep_alive_ = 0;
         size_t parsed_bytes_ = 0;

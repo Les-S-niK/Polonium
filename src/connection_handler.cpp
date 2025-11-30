@@ -4,13 +4,12 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
-#include <vector>
 #include <sys/types.h>
-// FIXME: REMOVE this include after development is complete:
-#include <iostream>
 
 #include "connection_handler.hpp"
-#include "request_parser.hpp"
+#include "http/http.hpp"
+#include "http/request_parser.hpp"
+#include "http/response_serializer.hpp"
 #include "socket_exceptions.hpp"
 
 
@@ -32,7 +31,8 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
     HttpRequestParser request_parser(logger_);
 
     while(true) {
-        std::vector<char> buffer(socket_options::max_buffer_size);
+        std::string buffer;
+        buffer.resize(socket_options::max_buffer_size);
 
         try { buffer = ipv4_socket_.tcpRecv(client_fd, socket_options::max_buffer_size); }
         catch(socket_exception& exception) {
@@ -50,26 +50,42 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             HttpRequest request = request_parser.getRequest();
             std::optional<std::function<json()>> handler = dispatcher_.checkRoute(request.method, request.uri);
 
-            std::vector<char> response_buffer;
+            std::string response_buffer;
+            logger_.info("Before handler check");
             if(!handler) {
-                logger_.info("Endpoint did not found.");
+                logger_.info("Endpoint did not find.");
+
+                HttpResponse http_response;
+                http_response.protocol = http_options::protocol;
+                http_response.version = http_options::version_1_1;
+                http_response.status_code = status_codes::not_found_404.first;
+                http_response.status_text = status_codes::not_found_404.second;
+                http_response.headers[http_headers::content_length] = '0';
+                
                 // TODO: Add Response serialization class.
-                std::string response = "HTTP/1.1 404 NOT FOUND\r\nContent-Length: 0\r\n\r\n";
+                HttpResponseSerializer serializer(logger_, http_response);
+                std::string response = serializer.serializeResponse();
+
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
             else {
                 logger_.info("Accepted connection to the existing endpoint.");
-                // TODO: Add Response serialization class.
                 json json_result = handler.value()();
-                std::cout << json_result.dump() << std::endl;
                 std::string dumped = json_result.dump();
-                std::string response = 
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Length: " + std::to_string(dumped.size()) + "\r\n"
-                    "Content-Type: application/json; charset=utf-8\r\n"
-                    "\r\n" +
-                    dumped;
+                HttpResponse http_response;
+                
+                http_response.protocol = http_options::protocol;
+                http_response.version = http_options::version_1_1;
+                http_response.status_code = status_codes::ok_200.first;
+                http_response.status_text = status_codes::ok_200.second;
+                http_response.headers[http_headers::content_length] = std::to_string(dumped.size());
+                http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
+                http_response.body = dumped;
+
+                HttpResponseSerializer serializer(logger_, http_response);
+                std::string response = serializer.serializeResponse();
+
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
@@ -92,5 +108,3 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
     }
     close(client_fd);
 }
-
-

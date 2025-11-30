@@ -1,9 +1,8 @@
 
-#include <vector>
 #include <format>
 
-#include "http_parsing/request_parser.hpp"
-#include "http.hpp"
+#include "http/request_parser.hpp"
+#include "http/http.hpp"
 #include "llhttp.h"
 #include "polonium_logger.hpp"
 
@@ -42,7 +41,7 @@ void HttpRequestParser::reset() {
     parsed_bytes_ = 0;
 }
 
-HttpRequestParserStatus HttpRequestParser::feed(const std::vector<char>& to_accumulate) {
+HttpRequestParserStatus HttpRequestParser::feed(std::string_view to_accumulate) {
     logger_.trace(__func__);
     parsed_bytes_ = raw_request_.size() - parsed_bytes_;
     if(!to_accumulate.empty()) {
