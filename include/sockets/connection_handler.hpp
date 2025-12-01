@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// #include "http.hpp"
 #include "polonium_logger.hpp"
 #include "tcp_socket.hpp"
 #include "dispatcher.hpp"

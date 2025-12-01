@@ -18,6 +18,10 @@ inline constexpr const char* gmt_time_format = "%a, %d %b %Y %H:%M:%S GMT";
 class HttpResponseSerializer
 {
     public:
+        HttpResponseSerializer(const HttpResponseSerializer&) = delete;
+        HttpResponseSerializer(HttpResponseSerializer&&) = delete;
+        HttpResponseSerializer operator=(const HttpResponseSerializer&) = delete;
+        HttpResponseSerializer operator=(HttpResponseSerializer&&) = delete;
         HttpResponseSerializer(PoloniumLogger& logger, HttpResponse& response):
             logger_(logger),
             response_(response)
@@ -35,9 +39,8 @@ class HttpResponseSerializer
                 response_.status_text
             );
 
-            for(const std::pair<const std::string_view, std::string_view>& header : response_.headers) {
+            for(const std::pair<const std::string_view, std::string_view>& header : response_.headers)
                 response_buffer.append(std::format("{}: {}\r\n", header.first, header.second));
-            }
             response_buffer.append(std::format("{}: {}\r\n\r\n", http_headers::date, getCurrentGmtTime()));
             response_buffer.append(response_.body);
 
@@ -55,12 +58,7 @@ class HttpResponseSerializer
             return str_stream.str();
         }
 
-
-        HttpResponseSerializer(const HttpResponseSerializer&) = delete;
-        HttpResponseSerializer(HttpResponseSerializer&&) = delete;
-        HttpResponseSerializer operator=(const HttpResponseSerializer&) = delete;
-        HttpResponseSerializer operator=(HttpResponseSerializer&&) = delete;
-
+    
     private:
         PoloniumLogger& logger_;
         HttpResponse& response_;

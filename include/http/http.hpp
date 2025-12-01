@@ -73,6 +73,8 @@ namespace http_headers {
     constexpr const char* content_length = "Content-Length";
     constexpr const char* content_type = "Content-Type";
     constexpr const char* date = "Date";
+    constexpr const char* connection = "Connection";
+    constexpr const char* cache_control = "Cache-Control";
 }
 
 namespace http_options {

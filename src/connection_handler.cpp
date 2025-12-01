@@ -7,6 +7,7 @@
 #include <sys/types.h>
 
 #include "connection_handler.hpp"
+#include "api_responses.hpp"
 #include "http/http.hpp"
 #include "http/request_parser.hpp"
 #include "http/response_serializer.hpp"
@@ -48,19 +49,22 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
-            std::optional<std::function<json()>> handler = dispatcher_.checkRoute(request.method, request.uri);
+            std::optional<std::function<ApiResponse()>> handler = dispatcher_.checkRoute(request.method, request.uri);
 
             std::string response_buffer;
             logger_.info("Before handler check");
             if(!handler) {
-                logger_.info("Endpoint did not find.");
+                logger_.info("Endpoint not found.");
+                std::string json_str = R"({"status": 404, "message": "Endpoint not found."})";
 
                 HttpResponse http_response;
                 http_response.protocol = http_options::protocol;
                 http_response.version = http_options::version_1_1;
                 http_response.status_code = status_codes::not_found_404.first;
                 http_response.status_text = status_codes::not_found_404.second;
-                http_response.headers[http_headers::content_length] = '0';
+                http_response.headers[http_headers::content_length] = std::to_string(json_str.size());
+                http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
+                http_response.body = json_str;
                 
                 // TODO: Add Response serialization class.
                 HttpResponseSerializer serializer(logger_, http_response);
@@ -71,16 +75,18 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             else {
                 logger_.info("Accepted connection to the existing endpoint.");
-                json json_result = handler.value()();
-                std::string dumped = json_result.dump();
-                HttpResponse http_response;
+                ApiResponse api_response = handler.value()();
+                std::string dumped = api_response.content;
                 
+                HttpResponse http_response;
                 http_response.protocol = http_options::protocol;
                 http_response.version = http_options::version_1_1;
-                http_response.status_code = status_codes::ok_200.first;
-                http_response.status_text = status_codes::ok_200.second;
+                http_response.status_code = api_response.status_code.first;
+                http_response.status_text = api_response.status_code.second;
                 http_response.headers[http_headers::content_length] = std::to_string(dumped.size());
                 http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
+                for(const std::pair<std::string, std::string>& header : api_response.headers)
+                    http_response.headers.insert(header);
                 http_response.body = dumped;
 
                 HttpResponseSerializer serializer(logger_, http_response);
