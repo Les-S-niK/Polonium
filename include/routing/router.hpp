@@ -5,6 +5,7 @@
 #include <string_view>
 #include <utility>
 
+#include "api_responses.hpp"
 #include "polonium_logger.hpp"
 #include "dispatcher.hpp"
 // TODO: Add the path params support. 
@@ -20,7 +21,7 @@ struct Route
 {
     std::string method;
     std::string uri;
-    std::function<json()> handler;
+    std::function<ApiResponse()> handler;
 };
 
 
@@ -29,21 +30,21 @@ class Router
     public:
         Router(std::string_view default_uri = "") : default_uri_(default_uri) {}
 
-        inline void get(const std::string& uri, std::function<json()> handler) {
+        inline void get(const std::string& uri, std::function<ApiResponse()> handler) {
             logger_.trace(__func__);
             routes.emplace_back(http_methods::get, default_uri_ + uri, handler);
         }
 
-        inline void post(const std::string& uri, std::function<json()> handler) {
+        inline void post(const std::string& uri, std::function<ApiResponse()> handler) {
             logger_.trace(__func__);
             routes.emplace_back(http_methods::post, default_uri_ + uri, handler);
         }
 
         inline void includeDispatcher(Dispatcher& dispatcher) noexcept {
             logger_.trace(__func__);
-            for(auto& [method, uri, handler] : routes) {
+            for(auto& [method, uri, handler] : routes)
                 dispatcher.registerMethod(std::move(method), std::move(uri), std::move(handler));
-            }
+            
             routes.clear();
             logger_.debug("Methods are included in the dispatcher.");
         }

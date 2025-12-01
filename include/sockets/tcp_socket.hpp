@@ -5,7 +5,6 @@
 #include <cstring>
 #include <string>
 #include <utility>
-#include <vector>
 #include <cstdint>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -83,9 +82,11 @@ class TcpIpv4Socket
             return std::make_pair(client_fd, client_addr);
         }
 
-        inline std::vector<char> tcpRecv(const socket_fd& client_fd, const size_t& max_buffer_size, const int flags = 0) {
+        inline std::string tcpRecv(const socket_fd& client_fd, const size_t& max_buffer_size, const int flags = 0) {
             logger_.trace(__func__);
-            std::vector<char> buffer(max_buffer_size);
+            std::string buffer;
+            buffer.resize(max_buffer_size);
+
             size_t recieved_size = recv(client_fd, buffer.data(), buffer.size(), flags);
             
             if(recieved_size == -1) logAndThrowException_(exception_messages::tcp_recv);
@@ -96,7 +97,7 @@ class TcpIpv4Socket
             return buffer;
         }
 
-        inline void tcpSend(const socket_fd& client_fd, const std::vector<char>& buffer, int flags = 0) {
+        inline void tcpSend(const socket_fd& client_fd, std::string_view buffer, int flags = 0) {
             logger_.trace(__func__);
             if(send(client_fd, buffer.data(), buffer.size(), flags) == -1) logAndThrowException_(exception_messages::tcp_send);
             logger_.debug(std::format("Sent buffer with the size: {}", buffer.size()));

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "json.hpp"
 
@@ -65,3 +67,22 @@ class HttpRequest : public HttpAction
         std::string method;
         std::string uri;
 };
+
+
+namespace http_headers {
+    constexpr const char* content_length = "Content-Length";
+    constexpr const char* content_type = "Content-Type";
+    constexpr const char* date = "Date";
+    constexpr const char* connection = "Connection";
+    constexpr const char* cache_control = "Cache-Control";
+}
+
+namespace http_options {
+    constexpr const char* protocol = "HTTP";
+    constexpr const char* version_1_1 = "1.1";
+}
+
+namespace status_codes {
+    constexpr std::pair<uint16_t, const char*> ok_200 = std::make_pair(200, "OK");
+    constexpr std::pair<uint16_t, const char*> not_found_404 = std::make_pair(404, "NOT FOUND");
+}
