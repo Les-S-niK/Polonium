@@ -1,2 +1,2 @@
 # Polonium
-Polonium is a  test C++ Web Rest Api Framework. Now in developing. 
+Polonium is a studying-oriented C++ Web HTTP-JSON API Framework. Now in developing. 
