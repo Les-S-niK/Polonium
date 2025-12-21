@@ -15,6 +15,7 @@ add_library(
         ${SRC_PATH}/request_parser.cpp
         ${SRC_PATH}/dispatcher.cpp
         ${SRC_PATH}/polonium_logger.cpp
+        ${SRC_PATH}/uri_parser.cpp
 )
 
 target_compile_features(Polonium PRIVATE cxx_std_20)
@@ -32,12 +33,14 @@ add_library(
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/http.c
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/api.c
 )
+
 target_include_directories(
     libhttp PUBLIC 
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/llhttp/
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ctre/
 )
 
 target_link_libraries(
     Polonium PUBLIC
-        libhttp 
+        libhttp
 )

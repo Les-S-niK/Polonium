@@ -21,7 +21,7 @@ struct Route
 {
     std::string method;
     std::string uri;
-    std::function<ApiResponse()> handler;
+    endpoint_handler handler;
 };
 
 
@@ -30,12 +30,12 @@ class Router
     public:
         Router(std::string_view default_uri = "") : default_uri_(default_uri) {}
 
-        inline void get(const std::string& uri, std::function<ApiResponse()> handler) {
+        inline void get(const std::string& uri, endpoint_handler handler) {
             logger_.trace(__func__);
             routes.emplace_back(http_methods::get, default_uri_ + uri, handler);
         }
 
-        inline void post(const std::string& uri, std::function<ApiResponse()> handler) {
+        inline void post(const std::string& uri, endpoint_handler handler) {
             logger_.trace(__func__);
             routes.emplace_back(http_methods::post, default_uri_ + uri, handler);
         }

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "http/http.hpp"
 #include <cstdint>
 #include <string>
 #include <sys/types.h>
 #include <unordered_map>
+
+#include "http/http.hpp"
 
 
 class ApiResponse
@@ -27,7 +28,7 @@ class ApiResponse
 };
 
 
-class JsonResponse : public ApiResponse
+class JsonResponse final : public ApiResponse
 {
     public:
         JsonResponse(const std::string& json_string, const std::pair<uint16_t, const char*>& status_code = status_codes::ok_200) {

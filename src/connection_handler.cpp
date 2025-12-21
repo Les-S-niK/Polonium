@@ -8,6 +8,7 @@
 
 #include "connection_handler.hpp"
 #include "api_responses.hpp"
+#include "dispatcher.hpp"
 #include "http/http.hpp"
 #include "http/request_parser.hpp"
 #include "http/response_serializer.hpp"
@@ -49,10 +50,14 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
-            std::optional<std::function<ApiResponse()>> handler = dispatcher_.checkRoute(request.method, request.uri);
+            std::optional<endpoint_handler> handler = dispatcher_.checkRoute(request.method, request.uri);
+            uri_path_params params_type_and_value = dispatcher_.findAllPathParams(request.uri);
+            for(auto& a : params_type_and_value) {
+                logger_.warning(a.first);
+                logger_.warning(a.second);
+            }
 
             std::string response_buffer;
-            logger_.info("Before handler check");
             if(!handler) {
                 logger_.info("Endpoint not found.");
                 std::string json_str = R"({"status": 404, "message": "Endpoint not found."})";
@@ -75,7 +80,7 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             else {
                 logger_.info("Accepted connection to the existing endpoint.");
-                ApiResponse api_response = handler.value()();
+                ApiResponse api_response = handler.value()(request);
                 std::string dumped = api_response.content;
                 
                 HttpResponse http_response;
