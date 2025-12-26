@@ -50,15 +50,10 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
-            std::optional<endpoint_handler> handler = dispatcher_.checkRoute(request.method, request.uri);
-            uri_path_params params_type_and_value = dispatcher_.findAllPathParams(request.uri);
-            for(auto& a : params_type_and_value) {
-                logger_.warning(a.first);
-                logger_.warning(a.second);
-            }
+            HandlerWithParams handler = dispatcher_.checkRoute(request.method, request.uri);
 
             std::string response_buffer;
-            if(!handler) {
+            if(!handler.handler) {
                 logger_.info("Endpoint not found.");
                 std::string json_str = R"({"status": 404, "message": "Endpoint not found."})";
 
@@ -71,7 +66,7 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
                 http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
                 http_response.body = json_str;
                 
-                // TODO: Add Response serialization class.
+
                 HttpResponseSerializer serializer(logger_, http_response);
                 std::string response = serializer.serializeResponse();
 
@@ -80,7 +75,12 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             else {
                 logger_.info("Accepted connection to the existing endpoint.");
-                ApiResponse api_response = handler.value()(request);
+                // if(handler)
+                if(!handler.path_params.empty()) {
+                    for(auto value : handler.path_params)
+                        request.path_params.emplace(value);
+                }
+                ApiResponse api_response = handler.handler.value()(request);
                 std::string dumped = api_response.content;
                 
                 HttpResponse http_response;

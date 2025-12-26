@@ -1,13 +1,12 @@
 
 #pragma once
 
-#include <functional>
 #include <string_view>
 #include <utility>
 
-#include "api_responses.hpp"
 #include "polonium_logger.hpp"
 #include "dispatcher.hpp"
+#include "uri_parser.hpp"
 // TODO: Add the path params support. 
 // TODO: Add other http methods.
 
@@ -22,6 +21,14 @@ struct Route
     std::string method;
     std::string uri;
     endpoint_handler handler;
+    parsed_templates templates;
+    
+    Route(std::string method, std::string uri, endpoint_handler handler)
+     :
+      method(method),
+      uri(uri),
+      handler(handler)
+    { templates = UriTemplateParser(uri).getUriParamsTemplate(); } 
 };
 
 
@@ -42,8 +49,8 @@ class Router
 
         inline void includeDispatcher(Dispatcher& dispatcher) noexcept {
             logger_.trace(__func__);
-            for(auto& [method, uri, handler] : routes)
-                dispatcher.registerMethod(std::move(method), std::move(uri), std::move(handler));
+            for(auto& [method, uri, handler, templates] : routes)
+                dispatcher.registerMethod(std::move(method), std::move(uri), std::move(handler), std::move(templates));
             
             routes.clear();
             logger_.debug("Methods are included in the dispatcher.");

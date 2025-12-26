@@ -30,11 +30,11 @@ class ConnectionHandler
             PoloniumLogger& logger,
             Dispatcher& dispatcher
         ) :
-            host_(host),
-            port_(port),
-            logger_(logger),
             ipv4_socket_(logger),
-            dispatcher_(dispatcher)
+            port_(port),
+            host_(host),
+            dispatcher_(dispatcher),
+            logger_(logger)
         {
             logger_.trace(__func__);
             logger.info("Connection Handler initialization.");

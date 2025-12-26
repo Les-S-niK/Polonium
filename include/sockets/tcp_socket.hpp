@@ -87,7 +87,7 @@ class TcpIpv4Socket
             std::string buffer;
             buffer.resize(max_buffer_size);
 
-            size_t recieved_size = recv(client_fd, buffer.data(), buffer.size(), flags);
+            ssize_t recieved_size = recv(client_fd, buffer.data(), buffer.size(), flags);
             
             if(recieved_size == -1) logAndThrowException_(exception_messages::tcp_recv);
             else if (recieved_size == 0) buffer.clear();

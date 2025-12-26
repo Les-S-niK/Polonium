@@ -3,15 +3,15 @@
 #include "routing/uri_parser.hpp"
 
 
-std::unordered_map<std::string, std::string>
-UriParser::getUriParamsByTemplate(std::unordered_map<unsigned, UriParamTemplate> params_template) const {
+std::unordered_map<std::string, UriParamValue>
+UriParser::getUriParamsByTemplate(parsed_templates params_template) const {
     if(params_template.empty()) return {};
     
     std::vector<std::string> splitted_uri = splitUri(uri_);
     std::vector<std::string> splitted_uri_template = splitUri(uri_template_);
     if(splitted_uri.size() != splitted_uri_template.size()) return {};
 
-    std::unordered_map<std::string, std::string> parsed_values;
+    std::unordered_map<std::string, UriParamValue> parsed_values;
     
     for(size_t section = 0; section < splitted_uri.size(); section++) {
         auto found_template_it = params_template.find(section);
@@ -21,10 +21,10 @@ UriParser::getUriParamsByTemplate(std::unordered_map<unsigned, UriParamTemplate>
 
             if(param_template.type == uri_param_types::int_type) {
                 if(!tryConvertToInt(splitted_uri[section])) return {};
-                parsed_values.emplace(param_template.name, splitted_uri[section]);
+                parsed_values.emplace(param_template.name, UriParamValue(uri_param_types::int_type, splitted_uri[section]));
             }
             else if(param_template.type == uri_param_types::str_type)
-                parsed_values.emplace(param_template.name, splitted_uri[section]);
+                parsed_values.emplace(param_template.name, UriParamValue(uri_param_types::str_type, splitted_uri[section]));
         } 
         else if(splitted_uri[section] != splitted_uri_template[section]) return {};
     }
@@ -32,9 +32,9 @@ UriParser::getUriParamsByTemplate(std::unordered_map<unsigned, UriParamTemplate>
 }
 
 
-std::unordered_map<unsigned, UriParamTemplate> UriTemplateParser::getUriParamsTemplate() const {
+parsed_templates UriTemplateParser::getUriParamsTemplate() const {
     // {unsigned section: UtiParamTemplate(string type, string name)}
-    std::unordered_map<unsigned, UriParamTemplate> path_params;    
+    parsed_templates path_params;    
     std::vector<std::string> splitted_uri = splitUri(uri_template_);
     // TODO: Make better exception throwing.
     if(!validateUriTemplateFirst()) throw std::runtime_error("Incorrect URI template!");

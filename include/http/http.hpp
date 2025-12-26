@@ -24,11 +24,11 @@ struct UriParamTemplate
 
 struct UriParamValue
 {
-    UriParamValue(std::string type, std::string value)
+    UriParamValue(std::string_view type, std::string value)
      :
       type(type), value(value)
         {}
-    std::string type;
+    std::string_view type;
     std::string value;
 };
 

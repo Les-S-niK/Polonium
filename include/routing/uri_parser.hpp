@@ -1,15 +1,18 @@
 
 #pragma once
 
-#include "ctre.hpp"
 #include <array>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 
+#include "ctre.hpp"
 #include "http/http.hpp"
 
+
+using parsed_templates = std::unordered_map<unsigned, UriParamTemplate>;
 
 namespace uri_param_types {
     inline constexpr std::string_view str_type = "str";
@@ -45,8 +48,8 @@ class UriParser
         UriParser& operator=(const UriParser&) noexcept = default;
         UriParser& operator=(const UriParser&&) noexcept = delete;
         
-        std::unordered_map<std::string, std::string> 
-        getUriParamsByTemplate(std::unordered_map<unsigned, UriParamTemplate> params_template) const;
+        std::unordered_map<std::string, UriParamValue> 
+        getUriParamsByTemplate(parsed_templates params_template) const;
     
     private:
         std::string_view uri_;
@@ -54,7 +57,8 @@ class UriParser
 
         bool tryConvertToInt(const std::string& value) const {
             try { std::stoi(value); } 
-            catch (const std::invalid_argument&) { return false; }
+            catch(const std::invalid_argument&) { return false; }
+            catch(const std::out_of_range&) { return false; }
             return true;
         }
 };
@@ -69,7 +73,7 @@ class UriTemplateParser
         UriTemplateParser& operator=(const UriTemplateParser&) noexcept = default;
         UriTemplateParser& operator=(const UriTemplateParser&&) noexcept = delete;
         
-        std::unordered_map<unsigned, UriParamTemplate> getUriParamsTemplate() const;
+        parsed_templates getUriParamsTemplate() const;
 
     private:
         static constexpr auto pattern = ctll::fixed_string{"(?<type>\\w+)\\s+(?<name>\\w+)"};

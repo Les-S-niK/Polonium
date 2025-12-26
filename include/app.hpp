@@ -19,8 +19,8 @@ class App
             const LoggerLevels& log_level
         ) :
             logger_(PoloniumLogger::getInstance(logs_path, log_level)),
-            connection_handler_(host, port, logger_, dispatcher_),
-            dispatcher_(logger_)
+            dispatcher_(logger_),
+            connection_handler_(host, port, logger_, dispatcher_)
         {
             logger_.trace(__func__);
         }

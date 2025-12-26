@@ -19,7 +19,7 @@ class ApiResponse
             headers.insert(to_append);
         }
         void appendHeaders(const std::unordered_map<std::string, std::string>& to_append) {
-            for(const std::pair<std::string, std::string>& header : to_append)
+            for(const auto& header : to_append)
                 headers.insert(header);
         }
         void appendHeaders(const std::string& key, const std::string& value) {
