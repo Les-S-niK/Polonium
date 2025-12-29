@@ -1,4 +1,5 @@
 
+#include <cstring>
 #include <iostream>
 
 #include "polonium_logger.hpp"
@@ -6,15 +7,14 @@
 
 PoloniumLogger* PoloniumLogger::instance_ptr_ = nullptr;
 
-PoloniumLogger::PoloniumLogger(path log_dir, LoggerLevels log_level) :
-    log_dir_path_(log_dir),
-    log_level_(log_level)
+PoloniumLogger::PoloniumLogger(const path& log_dir, const LoggerLevels& log_level)
+ :
+  log_dir_path_(log_dir),
+  log_file_path_(log_dir_path_ / (getCurrentTime(logger_date_formats::filename_format) + ".plog")),
+  log_level_(log_level)
 {
-    if(!std::filesystem::exists(log_dir)) {
+    if(!std::filesystem::exists(log_dir))
         std::filesystem::create_directories(log_dir);
-    }
-    std::string filename = getCurrentTime(logger_date_formats::filename_format) + ".plog";
-    log_file_path_ = log_dir_path_ / filename;
 
     log_file_.open(log_file_path_, std::ios::app);
     if(!log_file_.is_open()) {
@@ -27,7 +27,7 @@ PoloniumLogger::PoloniumLogger(path log_dir, LoggerLevels log_level) :
 
 void PoloniumLogger::newMessage(
     std::string_view message,
-    LoggerLevels message_level,
+    const LoggerLevels& message_level,
     std::string_view message_color,
     std::string_view pre_message_text
 ) {
@@ -56,11 +56,22 @@ void PoloniumLogger::newMessage(
 
 
 std::string PoloniumLogger::getCurrentTime(std::string_view format) const {
-    time_t timestamp = time(NULL);
-    struct tm datetime = *localtime(&timestamp);
+    constexpr const char* default_time = "00-00-00__00-00-0000";
+    constexpr size_t buffer_size = 64;
 
-    std::stringstream string_stream;
-    string_stream << std::put_time(&datetime, format.data());
-    return string_stream.str();
+    std::time_t timestamp = std::time(nullptr);
+    if (timestamp == -1) return default_time;
+
+    struct std::tm datetime{};
+    if (localtime_r(&timestamp, &datetime) == nullptr) { return default_time; }
+
+    std::string buffer;
+    buffer.resize(buffer_size);
+
+    size_t result_size = std::strftime(buffer.data(), buffer_size, format.data(), &datetime);
+    if (result_size == 0) return default_time;    
+    buffer.resize(result_size);
+    
+    return buffer;
 }
 

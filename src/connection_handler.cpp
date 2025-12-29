@@ -1,13 +1,9 @@
 
-#include <cstdlib>
 #include <functional>
-#include <string>
 #include <thread>
-#include <unistd.h>
-#include <sys/types.h>
+#include <variant>
 
 #include "connection_handler.hpp"
-#include "api_responses.hpp"
 #include "dispatcher.hpp"
 #include "http/http.hpp"
 #include "http/request_parser.hpp"
@@ -55,7 +51,11 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             std::string response_buffer;
             if(!handler.handler) {
                 logger_.info("Endpoint not found.");
-                std::string json_str = R"({"status": 404, "message": "Endpoint not found."})";
+                std::string json_str = 
+                    std::format(R"({{"status": "{}", "message": "{}"}})",
+                    status_codes::not_found_404.first,
+                    status_codes::not_found_404.second
+                );
 
                 HttpResponse http_response;
                 http_response.protocol = http_options::protocol;
@@ -75,22 +75,23 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             else {
                 logger_.info("Accepted connection to the existing endpoint.");
-                // if(handler)
+
                 if(!handler.path_params.empty()) {
                     for(auto value : handler.path_params)
                         request.path_params.emplace(value);
                 }
-                ApiResponse api_response = handler.handler.value()(request);
-                std::string dumped = api_response.content;
+                auto api_response = handler.handler.value()(request);
+                std::pair<uint16_t, const char*> status_code = std::visit([](auto& res) { return res.status_code; }, api_response);
+                std::string dumped = std::visit([](auto& res) { return res.getContent(); }, api_response);
                 
                 HttpResponse http_response;
                 http_response.protocol = http_options::protocol;
                 http_response.version = http_options::version_1_1;
-                http_response.status_code = api_response.status_code.first;
-                http_response.status_text = api_response.status_code.second;
+                http_response.status_code = status_code.first;
+                http_response.status_text = status_code.second;
                 http_response.headers[http_headers::content_length] = std::to_string(dumped.size());
                 http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
-                for(const std::pair<std::string, std::string>& header : api_response.headers)
+                for(const std::pair<std::string, std::string>& header : std::visit([](auto& res) { return res.headers; }, api_response))
                     http_response.headers.insert(header);
                 http_response.body = dumped;
 
@@ -109,9 +110,8 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             }
             request_parser.reset();
         }
-        else if(parser_status == HttpRequestParserStatus::NeedMore) {
+        else if(parser_status == HttpRequestParserStatus::NeedMore)
             continue;
-        }
         else {
             close(client_fd);
             return;

@@ -51,7 +51,7 @@ enum class LoggerLevels
 class PoloniumLogger
 {
     public:
-        inline static PoloniumLogger& getInstance(path log_dir, LoggerLevels log_level) {
+        inline static PoloniumLogger& getInstance(const path& log_dir, const LoggerLevels& log_level) {
             static PoloniumLogger logger(log_dir, log_level);
             instance_ptr_ = &logger;
             return logger;
@@ -59,7 +59,7 @@ class PoloniumLogger
 
         inline static PoloniumLogger& getInstance() {
             if(!instance_ptr_) throw std::runtime_error("Logger not initialized. Call getInstance(log_dir, log_level) first.");
-            return getInstance("./", LoggerLevels::Info);
+            return *instance_ptr_;
         }
 
         PoloniumLogger(const PoloniumLogger&) = delete;
@@ -120,16 +120,16 @@ class PoloniumLogger
         }
 
     private:
-        PoloniumLogger(path log_dir, LoggerLevels log_level);
+        PoloniumLogger(const path& log_dir, const LoggerLevels& log_level);
         ~PoloniumLogger() { if(log_file_.is_open()) log_file_.close(); }
 
-        std::mutex logger_mtx_;
-        std::fstream log_file_;
-        path log_dir_path_;
-        LoggerLevels log_level_;
-        path log_file_path_;  
+        path log_dir_path_{};
+        path log_file_path_{};  
+        LoggerLevels log_level_ = LoggerLevels::Debug;
+        std::mutex logger_mtx_{};
+        std::fstream log_file_{};
         static PoloniumLogger* instance_ptr_;
 
-        void newMessage(std::string_view message, LoggerLevels message_level, std::string_view message_color, std::string_view pre_message_text);
+        void newMessage(std::string_view message, const LoggerLevels& message_level, std::string_view message_color, std::string_view pre_message_text);
         std::string getCurrentTime(std::string_view format) const;
 };

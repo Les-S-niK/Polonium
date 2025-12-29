@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 #include "api_responses.hpp"
 #include "http/http.hpp"
@@ -12,7 +13,7 @@
 #include "uri_parser.hpp"
 
 
-using endpoint_handler = std::function<ApiResponse(HttpRequest request)>;
+using endpoint_handler = std::function<std::variant<JsonResponse>(HttpRequest request)>;
 using routes_table = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<endpoint_handler, parsed_templates>>>;
 
 
@@ -24,7 +25,6 @@ struct HandlerWithParams
     {}
     HandlerWithParams(std::unordered_map<std::string, UriParamValue> path_params) : path_params(path_params) {}
     HandlerWithParams() {}
-    
 
     std::optional<endpoint_handler> handler = std::nullopt;
     std::unordered_map<std::string, UriParamValue> path_params;
