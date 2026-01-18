@@ -11,7 +11,6 @@
 #include "polonium_logger.hpp"
 
 
-// TODO: Implement the first version of the serializer logic. 
 inline constexpr const char* gmt_time_format = "%a, %d %b %Y %H:%M:%S GMT";
 
 
@@ -22,7 +21,7 @@ class HttpResponseSerializer
         HttpResponseSerializer(HttpResponseSerializer&&) = delete;
         HttpResponseSerializer operator=(const HttpResponseSerializer&) = delete;
         HttpResponseSerializer operator=(HttpResponseSerializer&&) = delete;
-        HttpResponseSerializer(PoloniumLogger& logger, HttpResponse& response):
+        HttpResponseSerializer(const PoloniumLogger& logger, const HttpResponse& response):
             logger_(logger),
             response_(response)
         {}
@@ -57,10 +56,9 @@ class HttpResponseSerializer
 
             return str_stream.str();
         }
-
     
     private:
-        PoloniumLogger& logger_;
-        HttpResponse& response_;
+        const PoloniumLogger& logger_;
+        const HttpResponse& response_;
         std::string http_response_;
 };

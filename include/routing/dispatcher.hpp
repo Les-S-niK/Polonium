@@ -2,10 +2,10 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <variant>
 
 #include "api_responses.hpp"
 #include "http/http.hpp"
@@ -13,7 +13,7 @@
 #include "uri_parser.hpp"
 
 
-using endpoint_handler = std::function<std::variant<JsonResponse>(HttpRequest request)>;
+using endpoint_handler = std::function<std::shared_ptr<ApiResponse> (HttpRequest&& request)>;
 using routes_table = std::unordered_map<std::string, std::unordered_map<std::string, std::pair<endpoint_handler, parsed_templates>>>;
 
 

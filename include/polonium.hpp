@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "dispatcher.hpp"
-#include "polonium_logger.hpp"
-#include "router.hpp"
 #include <string>
 
+#include "dispatcher.hpp"
+#include "polonium_logger.hpp"
+#include "polonium_router.hpp"
 #include "connection_handler.hpp"
 
 
@@ -17,7 +17,7 @@ class App
             const uint16_t& port,
             std::string_view logs_path,
             const LoggerLevels& log_level
-        ) :
+        ):
             logger_(PoloniumLogger::getInstance(logs_path, log_level)),
             dispatcher_(logger_),
             connection_handler_(host, port, logger_, dispatcher_)
@@ -26,12 +26,11 @@ class App
         }
         ~App() { logger_.trace(__func__); }
 
-        void includeRouter(Router* router) {
+        void includeRouter(PoloniumRouter* router) {
             logger_.trace(__func__);
             router->includeDispatcher(dispatcher_);
-            if(router) {
+            if(router)
                 routers.push_back(router);
-            }
         }
 
         void start() {
@@ -43,5 +42,5 @@ class App
         PoloniumLogger& logger_;
         Dispatcher dispatcher_;
         ConnectionHandler connection_handler_;
-        std::vector<Router*> routers;
+        std::vector<PoloniumRouter*> routers;
 };

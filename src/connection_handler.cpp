@@ -1,7 +1,6 @@
 
 #include <functional>
 #include <thread>
-#include <variant>
 
 #include "connection_handler.hpp"
 #include "dispatcher.hpp"
@@ -33,89 +32,54 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
         buffer.resize(socket_options::max_buffer_size);
 
         try { buffer = ipv4_socket_.tcpRecv(client_fd, socket_options::max_buffer_size); }
-        catch(socket_exception& exception) {
-            close(client_fd);
-            return;
-        }
-        if(buffer.empty()) {
-            close(client_fd);
-            return;
-        }
+        catch(socket_exception& exception) { close(client_fd); return; }
+        if(buffer.empty()) { close(client_fd); return; }
 
         HttpRequestParserStatus parser_status = request_parser.feed(buffer);
 
         if(parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
-            HandlerWithParams handler = dispatcher_.checkRoute(request.method, request.uri);
-
+            HandlerWithParams handler_with_params = dispatcher_.checkRoute(request.method, request.uri);
             std::string response_buffer;
-            if(!handler.handler) {
+
+            if(!handler_with_params.handler) {
+                // Endpoint not found. Serializing 404 (Not Found) response.
                 logger_.info("Endpoint not found.");
-                std::string json_str = 
-                    std::format(R"({{"status": "{}", "message": "{}"}})",
-                    status_codes::not_found_404.first,
-                    status_codes::not_found_404.second
-                );
-
-                HttpResponse http_response;
-                http_response.protocol = http_options::protocol;
-                http_response.version = http_options::version_1_1;
-                http_response.status_code = status_codes::not_found_404.first;
-                http_response.status_text = status_codes::not_found_404.second;
-                http_response.headers[http_headers::content_length] = std::to_string(json_str.size());
-                http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
-                http_response.body = json_str;
                 
-
-                HttpResponseSerializer serializer(logger_, http_response);
-                std::string response = serializer.serializeResponse();
-
+                std::string response =  HttpResponseSerializer(logger_, response_templates::error_404_response).serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
             else {
+                /* Accepted connection to the existing endpoint. Execute user's function and serialize a response.
+                * Function returns ApiResponse subclass object. Move headers and body from the object.
+                */ 
                 logger_.info("Accepted connection to the existing endpoint.");
-
-                if(!handler.path_params.empty()) {
-                    for(auto value : handler.path_params)
+                if(!handler_with_params.path_params.empty()) {
+                    for(auto value : handler_with_params.path_params)
                         request.path_params.emplace(value);
                 }
-                auto api_response = handler.handler.value()(request);
-                std::pair<uint16_t, const char*> status_code = std::visit([](auto& res) { return res.status_code; }, api_response);
-                std::string dumped = std::visit([](auto& res) { return res.getContent(); }, api_response);
+                auto api_response = handler_with_params.handler.value()(std::move(request));                
                 
-                HttpResponse http_response;
-                http_response.protocol = http_options::protocol;
-                http_response.version = http_options::version_1_1;
-                http_response.status_code = status_code.first;
-                http_response.status_text = status_code.second;
-                http_response.headers[http_headers::content_length] = std::to_string(dumped.size());
+                HttpResponse http_response(http_options::protocol, http_options::version_1_1, api_response->status_code);
+                http_response.headers[http_headers::content_length] = std::to_string(api_response->getContent().size());
                 http_response.headers[http_headers::content_type] = "application/json; charset=utf-8";
-                for(const std::pair<std::string, std::string>& header : std::visit([](auto& res) { return res.headers; }, api_response))
-                    http_response.headers.insert(header);
-                http_response.body = dumped;
+                for(const std::pair<std::string, std::string>&& header : api_response->headers)
+                    http_response.headers.insert(std::move(header));
+                http_response.body = std::move(api_response->getContent());
 
-                HttpResponseSerializer serializer(logger_, http_response);
-                std::string response = serializer.serializeResponse();
-
+                std::string response = HttpResponseSerializer(logger_, http_response).serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
             try { ipv4_socket_.tcpSend(client_fd, response_buffer); }
             catch(socket_exception&) { close(client_fd); }
             
-            if(!request_parser.isKeepAlive()) {
-                close(client_fd);
-                return;
-            }
+            if(!request_parser.isKeepAlive()) { close(client_fd); return; }
             request_parser.reset();
         }
-        else if(parser_status == HttpRequestParserStatus::NeedMore)
-            continue;
-        else {
-            close(client_fd);
-            return;
-        }
+        else if(parser_status == HttpRequestParserStatus::NeedMore) continue;
+        else { close(client_fd); return; }
     }
     close(client_fd);
 }

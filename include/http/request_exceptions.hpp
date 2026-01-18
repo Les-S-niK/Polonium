@@ -9,7 +9,6 @@
 /**
  * @brief llhttp_bad_errno is exception that represents llttp errnos in readable form.
  * You should throw it when llhttp sets bad errno.
- * 
  */
 class llhttp_bad_errno : public std::exception
 {

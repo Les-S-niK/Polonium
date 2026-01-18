@@ -60,14 +60,13 @@ class HttpRequestParser
         llhttp_t parser_;
         llhttp_settings_t settings_;
         HttpRequest request_;
-         std::string raw_request_;
+        std::string raw_request_;
         bool is_complete_ = 0;
         bool is_keep_alive_ = 0;
         size_t parsed_bytes_ = 0;
         PoloniumLogger& logger_;
-
         /**
-         * @brief Temporary pair presents <field: value> in the request headers.
+         * @brief Temporary pair represents <field: value> in the request headers.
          * The first element sets in the <handler_on_header_field>
          * The second element sets in the <handler_on_header_value>
          * The pair will be added in the <headers> in the <handler_on_header_value_complete>.
@@ -76,14 +75,14 @@ class HttpRequestParser
 
         HttpRequestParserStatus parseAccumulated();
         void setCallbacks();
-        
+
         static inline int handler_on_message_begin(llhttp_t* parser) {
             HttpRequestParser* self = static_cast<HttpRequestParser*>(parser->data);
             // Reset all the fields in the class instance.
             self->reset();
             return 0;
         }
-        
+
         /**
         * @brief Handler calls when llhttp finds HTTP method:
         * [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS, TRACE, CONNECT]

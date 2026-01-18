@@ -1,24 +1,22 @@
 
 #pragma once
 
-#include <array>
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <unordered_map>
+#include <vector>
+#include <sstream>
 
+/*
+Since I won't change ctre to another way to use regex in compile-time,
+I don't want to make a header with interfaces for this third-party lib.
+*/ 
 #include "ctre.hpp"
-#include "http/http.hpp"
+#include "routing/uri_params.hpp"
 
 
 using parsed_templates = std::unordered_map<unsigned, UriParamTemplate>;
-
-namespace uri_param_types {
-    inline constexpr std::string_view str_type = "str";
-    inline constexpr std::string_view int_type = "int";
-    inline constexpr std::array<std::string_view, 2> allowed_types = {int_type, str_type};
-}
 
 
 inline std::vector<std::string> splitUri(std::string_view uri, const char separator = '/') {
@@ -56,9 +54,13 @@ class UriParser
         std::string_view uri_template_;
 
         bool tryConvertToInt(const std::string& value) const {
-            try { std::stoi(value); } 
+            size_t pos{}; 
+            
+            try { std::stoi(value, &pos); } 
             catch(const std::invalid_argument&) { return false; }
             catch(const std::out_of_range&) { return false; }
+            
+            if(value.size() != pos) return false;
             return true;
         }
 };
