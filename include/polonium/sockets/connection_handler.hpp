@@ -6,9 +6,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "polonium_logger.hpp"
-#include "tcp_socket.hpp"
-#include "dispatcher.hpp"
+#include "polonium/polonium_logger.hpp"
+#include "polonium/sockets/tcp_socket.hpp"
+#include "polonium/routing/dispatcher.hpp"
 
 
 // TODO: Implement IPv6 support in future.

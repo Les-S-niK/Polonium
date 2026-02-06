@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include "dispatcher.hpp"
-#include "polonium_logger.hpp"
-#include "polonium_router.hpp"
-#include "connection_handler.hpp"
+#include "polonium/routing/dispatcher.hpp"
+#include "polonium/polonium_logger.hpp"
+#include "polonium/routing/polonium_router.hpp"
+#include "polonium/sockets/connection_handler.hpp"
 
 
 class App

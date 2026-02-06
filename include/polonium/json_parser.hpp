@@ -2,7 +2,7 @@
 /* This header provides third-party json parser functionallity. */
 #pragma once
 
-#include "json.hpp"
+#include <nlohmann/json.hpp>
 
 
 using json = nlohmann::json;

@@ -1,10 +1,16 @@
 build/
 logs/
+CMakeFiles/
 .plog
 .vscode
 .cache
 .github_token
 examples/
+CMakeCache.txt
+*.json
+cmake_install.cmake
+.clangd
+Makefile
 
 # Prerequisites
 *.d

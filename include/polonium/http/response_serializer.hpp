@@ -7,8 +7,8 @@
 #include <string>
 #include <string_view>
 
-#include "http.hpp"
-#include "polonium_logger.hpp"
+#include "polonium/http/http.hpp"
+#include "polonium/polonium_logger.hpp"
 
 
 inline constexpr const char* gmt_time_format = "%a, %d %b %Y %H:%M:%S GMT";
