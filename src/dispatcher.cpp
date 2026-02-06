@@ -3,8 +3,8 @@
 #include <string_view>
 #include <utility>
 
-#include "dispatcher.hpp"
-#include "uri_parser.hpp"
+#include "polonium/routing/dispatcher.hpp"
+#include "polonium/routing/uri_parser.hpp"
 
 
 void Dispatcher::registerMethod(std::string&& method, std::string&& uri, endpoint_handler&& handler, parsed_templates&& templates) {

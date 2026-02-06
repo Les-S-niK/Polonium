@@ -2,12 +2,12 @@
 #include <functional>
 #include <thread>
 
-#include "connection_handler.hpp"
-#include "dispatcher.hpp"
-#include "http/http.hpp"
-#include "http/request_parser.hpp"
-#include "http/response_serializer.hpp"
-#include "socket_exceptions.hpp"
+#include "polonium/sockets/connection_handler.hpp"
+#include "polonium/routing/dispatcher.hpp"
+#include "polonium/http/http.hpp"
+#include "polonium/http/request_parser.hpp"
+#include "polonium/http/response_serializer.hpp"
+#include "polonium/sockets/socket_exceptions.hpp"
 
 
 // TODO: Implement IPv6 support in future.
@@ -78,7 +78,7 @@ void ConnectionHandler::handleConnection(int client_fd, struct sockaddr_in clien
             if(!request_parser.isKeepAlive()) { close(client_fd); return; }
             request_parser.reset();
         }
-        else if(parser_status == HttpRequestParserStatus::NeedMore) continue;
+        else if(parser_status == HttpRequestParserStatus::NeedMore) { continue; }
         else { close(client_fd); return; }
     }
     close(client_fd);

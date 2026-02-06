@@ -12,8 +12,8 @@
 Since I won't change ctre to another way to use regex in compile-time,
 I don't want to make a header with interfaces for this third-party lib.
 */ 
-#include "ctre.hpp"
-#include "routing/uri_params.hpp"
+#include <ctre.hpp>
+#include "polonium/routing/uri_params.hpp"
 
 
 using parsed_templates = std::unordered_map<unsigned, UriParamTemplate>;

@@ -12,8 +12,8 @@
 #include <arpa/inet.h>
 #include <format>
 
-#include "polonium_logger.hpp"
-#include "socket_exceptions.hpp"
+#include "polonium/polonium_logger.hpp"
+#include "polonium/sockets/socket_exceptions.hpp"
 
 
 using socket_fd = int;

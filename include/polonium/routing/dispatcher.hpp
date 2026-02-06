@@ -7,10 +7,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "api_responses.hpp"
-#include "http/http.hpp"
-#include "polonium_logger.hpp"
-#include "uri_parser.hpp"
+#include "polonium/api_responses.hpp"
+#include "polonium/http/http.hpp"
+#include "polonium/polonium_logger.hpp"
+#include "polonium/routing/uri_parser.hpp"
 
 
 using endpoint_handler = std::function<std::shared_ptr<ApiResponse> (HttpRequest&& request)>;

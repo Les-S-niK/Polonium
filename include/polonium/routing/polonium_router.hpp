@@ -4,9 +4,9 @@
 #include <string_view>
 #include <utility>
 
-#include "polonium_logger.hpp"
-#include "dispatcher.hpp"
-#include "uri_parser.hpp"
+#include "polonium/polonium_logger.hpp"
+#include "polonium/routing/dispatcher.hpp"
+#include "polonium/routing/uri_parser.hpp"
 
 
 namespace http_methods {

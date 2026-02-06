@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "polonium_logger.hpp"
+#include "polonium/polonium_logger.hpp"
 
 
 PoloniumLogger* PoloniumLogger::instance_ptr_ = nullptr;
