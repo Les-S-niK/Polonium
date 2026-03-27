@@ -5,7 +5,7 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 class poloniumRecipe(ConanFile):
     name = "polonium"
-    version = "0.7.0"
+    version = "0.8.0"
     package_type = "library"
 
     # Optional metadata
