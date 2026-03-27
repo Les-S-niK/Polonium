@@ -4,15 +4,15 @@
 
 #include <nlohmann/json.hpp>
 
-
 using json = nlohmann::json;
 
 namespace json_actions {
-    inline json parseStringJson(std::string_view str) {
-        if(!json::accept(str))
-            /* Return an empty json if body can't be parsed. */
-            return json{};
-        
-        return json::parse(str);
-    }    
+inline auto parseStringJson(std::string_view str) -> json {
+    if (!json::accept(
+            str)) { /* Return an empty json if body can't be parsed. */
+        return json{};
+    }
+
+    return json::parse(str);
 }
+}  // namespace json_actions
