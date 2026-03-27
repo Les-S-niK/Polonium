@@ -1,11 +1,12 @@
 
-#include <format>
+#include "polonium/http/request_parser.hpp"
+
 #include <llhttp.h>
 
-#include "polonium/http/request_parser.hpp"
+#include <format>
+
 #include "polonium/http/http.hpp"
 #include "polonium/polonium_logger.hpp"
-
 
 HttpRequestParser::HttpRequestParser(PoloniumLogger& logger) : logger_(logger) {
     logger.trace(__func__);
@@ -17,7 +18,7 @@ HttpRequestParser::HttpRequestParser(PoloniumLogger& logger) : logger_(logger) {
     setCallbacks();
 }
 
-void HttpRequestParser::setCallbacks() {
+auto HttpRequestParser::setCallbacks() -> void {
     logger_.trace(__func__);
     settings_.on_message_begin = handler_on_message_begin;
     settings_.on_method = handler_on_method;
@@ -31,7 +32,7 @@ void HttpRequestParser::setCallbacks() {
     settings_.on_message_complete = handler_on_message_complete;
 }
 
-void HttpRequestParser::reset() {
+auto HttpRequestParser::reset() -> void {
     logger_.trace(__func__);
     request_ = HttpRequest{};
     temporary_pair_.first.clear();
@@ -41,41 +42,45 @@ void HttpRequestParser::reset() {
     parsed_bytes_ = 0;
 }
 
-HttpRequestParserStatus HttpRequestParser::feed(std::string_view to_accumulate) {
+auto HttpRequestParser::feed(std::string_view to_accumulate)
+    -> HttpRequestParserStatus {
     logger_.trace(__func__);
     parsed_bytes_ = raw_request_.size() - parsed_bytes_;
-    if(!to_accumulate.empty()) {
-        logger_.debug(std::format("Insert <to_accumulate> buffer.\nRaw request size: {}\nTo accumulate size: {}", raw_request_.size(), to_accumulate.size()));
-        raw_request_.insert(
-            raw_request_.end(),
-            to_accumulate.begin(),
-            to_accumulate.end()
-        );
+    if (!to_accumulate.empty()) {
+        logger_.debug(
+            std::format("Insert <to_accumulate> buffer.\nRaw request size: "
+                        "{}\nTo accumulate size: {}",
+                        raw_request_.size(), to_accumulate.size()));
+        raw_request_.insert(raw_request_.end(), to_accumulate.begin(),
+                            to_accumulate.end());
     }
-    if(hasRemainingData()) removeParsed();
+    if (hasRemainingData()) {
+        removeParsed();
+    }
     return parseAccumulated();
 }
 
-HttpRequestParserStatus HttpRequestParser::parseAccumulated() {
+auto HttpRequestParser::parseAccumulated() -> HttpRequestParserStatus {
     logger_.trace(__func__);
-    if(is_complete_) return HttpRequestParserStatus::Complete;
+    if (is_complete_) {
+        return HttpRequestParserStatus::Complete;
+    }
 
-    logger_.debug(std::format("Executing llhttp parser. Raw request size: {}", raw_request_.size()));
-    llhttp_errno_t parser_errno = llhttp_execute(
-        &parser_,
-        raw_request_.data(),
-        raw_request_.size()
-    );
+    logger_.debug(std::format("Executing llhttp parser. Raw request size: {}",
+                              raw_request_.size()));
+    llhttp_errno_t parser_errno =
+        llhttp_execute(&parser_, raw_request_.data(), raw_request_.size());
 
-    if(parser_errno != HPE_OK) {
-        logger_.error(std::format("Llhttp Parser returned bad HPE. HPE: {}", llhttp_errno_name(parser_errno)));
+    if (parser_errno != HPE_OK) {
+        logger_.error(std::format("Llhttp Parser returned bad HPE. HPE: {}",
+                                  llhttp_errno_name(parser_errno)));
         return HttpRequestParserStatus::Error;
     }
 
-    if(is_complete_) {
+    if (is_complete_) {
         logger_.debug("Llhttp parsing completed.");
         return HttpRequestParserStatus::Complete;
     }
     logger_.debug("Llhttp parser waits for the next message.");
-    return HttpRequestParserStatus::NeedMore;    
+    return HttpRequestParserStatus::NeedMore;
 }
