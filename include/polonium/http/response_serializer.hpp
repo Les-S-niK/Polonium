@@ -21,6 +21,7 @@ class HttpResponseSerializer {
     auto operator=(HttpResponseSerializer&&) -> HttpResponseSerializer = delete;
     HttpResponseSerializer(PoloniumLogger& logger, const HttpResponse& response)
         : logger_(logger), response_(response) {}
+    ~HttpResponseSerializer() = default;
 
     [[nodiscard]] auto serializeResponse() const -> std::string {
         logger_.trace(__func__);
@@ -51,7 +52,10 @@ class HttpResponseSerializer {
 
         auto current_time = system_clock::now();
         time_t time = system_clock::to_time_t(current_time);
-        str_stream << std::put_time(std::gmtime(&time), gmt_time_format);
+        struct tm stm;
+
+        gmtime_r(&time, &stm);
+        str_stream << std::put_time(&stm, gmt_time_format);
 
         return str_stream.str();
     }

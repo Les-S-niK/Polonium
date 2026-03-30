@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.15)
 project(polonium CXX)
 
 add_library(
-  polonium src/connection_handler.cpp src/dispatcher.cpp
-           src/polonium_logger.cpp src/request_parser.cpp src/uri_parser.cpp)
+  polonium
+  src/sockets/connection_handler.cpp src/routing/dispatcher.cpp
+  src/polonium_logger.cpp src/http/request_parser.cpp
+  src/routing/uri_parser.cpp src/http/http.cpp)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

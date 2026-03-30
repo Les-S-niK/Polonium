@@ -1,11 +1,10 @@
-
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 
 class poloniumRecipe(ConanFile):
     name = "polonium"
-    version = "0.8.0"
+    version = "0.8.2"
     package_type = "library"
 
     # Optional metadata
@@ -38,7 +37,7 @@ class poloniumRecipe(ConanFile):
 
     def layout(self):
         cmake_layout(self)
-    
+
     def generate(self):
         deps = CMakeDeps(self)
         deps.generate()

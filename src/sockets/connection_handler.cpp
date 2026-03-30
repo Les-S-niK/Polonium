@@ -58,7 +58,7 @@ void ConnectionHandler::handleConnection(int client_fd) {
 
                 std::string response =
                     HttpResponseSerializer(
-                        logger_, response_templates::error_404_response)
+                        logger_, response_templates::get404ErrorResponse())
                         .serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());

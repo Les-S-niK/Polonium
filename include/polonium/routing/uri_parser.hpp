@@ -28,6 +28,7 @@ class UriParser {
     UriParser(const UriParser&&) noexcept = delete;
     auto operator=(const UriParser&) noexcept -> UriParser& = default;
     auto operator=(const UriParser&&) noexcept -> UriParser& = delete;
+    ~UriParser() = default;
 
     [[nodiscard]] auto getUriParamsByTemplate(parsed_templates params_template)
         const -> std::unordered_map<std::string, UriParamValue>;
@@ -62,6 +63,7 @@ class UriTemplateParser {
         -> UriTemplateParser& = default;
     auto operator=(const UriTemplateParser&&) noexcept
         -> UriTemplateParser& = delete;
+    ~UriTemplateParser() = default;
 
     [[nodiscard]] auto getUriParamsTemplate() const -> parsed_templates;
 

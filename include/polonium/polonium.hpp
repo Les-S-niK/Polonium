@@ -11,6 +11,10 @@
 
 class App {
    public:
+    App(const App&) = default;
+    App(App&&) = delete;
+    auto operator=(const App&) -> App& = delete;
+    auto operator=(App&&) -> App& = delete;
     App(std::string host, uint16_t port, std::string_view logs_path,
         const LoggerLevels& log_level)
         : logger_(PoloniumLogger::getInstance(logs_path, log_level)),

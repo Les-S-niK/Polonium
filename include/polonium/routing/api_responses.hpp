@@ -4,6 +4,19 @@
 
 class ApiResponse {
    public:
+    ApiResponse(const ApiResponse&) = default;
+    ApiResponse(ApiResponse&&) = delete;
+    auto operator=(const ApiResponse&) -> ApiResponse& = default;
+    auto operator=(ApiResponse&&) -> ApiResponse& = delete;
+    ApiResponse() = default;
+    ApiResponse(std::pair<uint16_t, const char*> status_code,
+                std::unordered_map<std::string, std::string> headers,
+                std::string content)
+        : status_code(std::move(status_code)),
+          headers(std::move(headers)),
+          content(std::move(content)) {}
+    virtual ~ApiResponse() = default;
+
     std::pair<uint16_t, const char*> status_code;
     std::unordered_map<std::string, std::string> headers;
 
@@ -19,7 +32,7 @@ class ApiResponse {
         }
     }
     void appendHeaders(std::string&& key, std::string&& value) {
-        headers.insert({key, value});
+        headers.insert({std::move(key), std::move(value)});
     }
 
    protected:

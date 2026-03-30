@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <format>
 #include <string>
 #include <unordered_map>
 
@@ -241,6 +240,14 @@ struct HttpAction {
     virtual ~HttpAction() = default;
 
     /**
+     * @brief Get the Json object from the HTTP body.
+     *
+     * @return json (nlohmann::json). Returns an empty json if parser can't
+     * parse the body.
+     */
+    auto getJson() const -> json { return json_actions::parseStringJson(body); }
+
+    /**
      * @brief Main protocol name. (HTTP)
      */
     std::string protocol;
@@ -261,26 +268,17 @@ struct HttpAction {
      * @brief String representation of the http body.
      */
     std::string body;
-
-    /**
-     * @brief Get the Json object from the HTTP body.
-     *
-     * @return json (nlohmann::json). Returns an empty json if parser can't
-     * parse the body.
-     */
-    auto getJson() const -> json { return json_actions::parseStringJson(body); }
 };
 
 struct HttpResponse final : public HttpAction {
     HttpResponse() = default;
     HttpResponse(const std::string& protocol, const std::string& version,
-                 const std::pair<const uint16_t, const char*> status) {
+                 const std::pair<const uint16_t, const char*> status)
+        : status_code(status.first), status_text(status.second) {
         this->protocol = protocol;
         this->version = version;
-        this->status_code = status.first;
-        this->status_text = status.second;
     }
-    uint16_t status_code;
+    uint16_t status_code{};
     std::string status_text;
 };
 
@@ -291,24 +289,10 @@ struct HttpRequest final : public HttpAction {
 };
 
 namespace response_templates {
-namespace {
-inline auto create404ErrorResponse() -> HttpResponse {
-    std::string json_str =
-        std::format(R"({{"status": "{}", "message": "{}"}})",
-                    status_codes::client_errors_4xx::not_found_404.first,
-                    status_codes::client_errors_4xx::not_found_404.second);
-    HttpResponse error_404_response(
-        http_options::protocol, http_options::version_1_1,
-        status_codes::client_errors_4xx::not_found_404);
-    error_404_response.headers[http_headers::content_length] =
-        std::to_string(json_str.size());
-    error_404_response.headers[http_headers::content_type] =
-        "application/json; charset=utf-8";
-    error_404_response.body = json_str;
+auto create404ErrorResponse() -> HttpResponse;
 
+inline auto get404ErrorResponse() -> HttpResponse {
+    static HttpResponse error_404_response = create404ErrorResponse();
     return error_404_response;
 }
-}  // namespace
-
-inline const HttpResponse error_404_response = create404ErrorResponse();
 }  // namespace response_templates

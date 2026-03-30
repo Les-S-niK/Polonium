@@ -36,7 +36,7 @@ void PoloniumLogger::newMessage(std::string_view message,
     std::string current_time =
         getCurrentTime(logger_date_formats::log_str_format);
 
-    if (message.find('\n') == std::string_view::npos) {
+    if (!message.contains('\n')) {
         std::cout << message_color << current_time << " " << pre_message_text
                   << message << logger_colors::color_default << '\n';
     } else {

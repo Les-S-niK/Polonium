@@ -47,6 +47,11 @@ enum class LoggerLevels : uint8_t {
 
 class PoloniumLogger {
    public:
+    PoloniumLogger(PoloniumLogger&&) = delete;
+    auto operator=(PoloniumLogger&&) -> PoloniumLogger& = delete;
+    PoloniumLogger(const PoloniumLogger&) = delete;
+    auto operator=(const PoloniumLogger&) -> PoloniumLogger& = delete;
+
     static auto getInstance(const path& log_dir, const LoggerLevels& log_level)
         -> PoloniumLogger& {
         static PoloniumLogger logger(log_dir, log_level);
@@ -62,9 +67,6 @@ class PoloniumLogger {
         }
         return *instance_ptr_;
     }
-
-    PoloniumLogger(const PoloniumLogger&) = delete;
-    auto operator=(const PoloniumLogger&) -> PoloniumLogger& = delete;
 
     void trace(std::string_view message) {
         newMessage(message, LoggerLevels::Trace, logger_colors::trace,
