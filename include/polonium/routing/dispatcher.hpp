@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "polonium/api_responses.hpp"
+#include "polonium/routing/api_responses.hpp"
 #include "polonium/http/http.hpp"
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/uri_parser.hpp"
@@ -36,6 +36,10 @@ struct HandlerWithParams {
 
 class Dispatcher {
    public:
+    Dispatcher(const Dispatcher&) = default;
+    Dispatcher(Dispatcher&&) = delete;
+    auto operator=(const Dispatcher&) -> Dispatcher& = delete;
+    auto operator=(Dispatcher&&) -> Dispatcher& = delete;
     Dispatcher(PoloniumLogger& logger) : logger_(logger) {
         logger.trace(__func__);
     }

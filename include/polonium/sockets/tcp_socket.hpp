@@ -5,12 +5,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <format>
 #include <string>
+#include <system_error>
 #include <utility>
 
 #include "polonium/polonium_logger.hpp"
@@ -35,10 +37,16 @@ inline constexpr const char* tcp_send =
 
 class TcpIpv4Socket {
    public:
-    TcpIpv4Socket(PoloniumLogger& logger) : logger_(logger) {
+    TcpIpv4Socket(const TcpIpv4Socket&) = default;
+    TcpIpv4Socket(TcpIpv4Socket&&) = delete;
+    auto operator=(const TcpIpv4Socket&) -> TcpIpv4Socket& = delete;
+    auto operator=(TcpIpv4Socket&&) -> TcpIpv4Socket& = delete;
+    TcpIpv4Socket(PoloniumLogger& logger)
+        : logger_(logger),
+          server_fd_(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) {
         logger.trace(__func__);
         logger.info("TCP/IPv4 socket initialization.");
-        server_fd_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
         if (server_fd_ == -1) {
             logAndThrowException_(exception_messages::tcp_socket);
         }
@@ -60,7 +68,7 @@ class TcpIpv4Socket {
 
     void tcpBind(const std::string& host, const uint16_t& port) {
         logger_.trace(__func__);
-        struct sockaddr_in server_addr;
+        struct sockaddr_in server_addr{};
         inet_aton(host.c_str(), &server_addr.sin_addr);
         server_addr.sin_port = htons(port);
         server_addr.sin_family = AF_INET;
@@ -85,7 +93,7 @@ class TcpIpv4Socket {
 
     auto tcpAccept() -> std::pair<socket_fd, struct sockaddr_in> {
         logger_.trace(__func__);
-        struct sockaddr_in client_addr;
+        struct sockaddr_in client_addr{};
         socklen_t client_addr_len = sizeof(client_addr);
         socket_fd client_fd =
             accept(server_fd_, reinterpret_cast<struct sockaddr*>(&client_addr),
@@ -94,9 +102,13 @@ class TcpIpv4Socket {
         if (client_fd == -1) {
             logAndThrowException_(exception_messages::tcp_accept);
         }
+        std::array<char, praddr4_len> protoaddr{};
+        inet_ntop(AF_INET, &client_addr.sin_addr, protoaddr.data(),
+                  protoaddr.size());
+
         logger_.debug(std::format(
             "Accepted TCP/IPv4 connection.\nClient addr: {}\nClient port: {}",
-            inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port)));
+            protoaddr.data(), ntohs(client_addr.sin_port)));
 
         return std::make_pair(client_fd, client_addr);
     }
@@ -138,8 +150,9 @@ class TcpIpv4Socket {
     socket_fd server_fd_;
 
     void logAndThrowException_(std::string_view message) const {
-        std::string final_message =
-            std::format("{}. Errno: {}", message, strerror(errno));
+        std::string final_message = std::format(
+            "{}. Errno: {}", message,
+            (std::error_code(errno, std::generic_category()).message()));
         logger_.critical(final_message);
         throw socket_exception(final_message);
     }

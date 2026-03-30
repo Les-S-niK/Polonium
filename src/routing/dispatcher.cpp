@@ -19,9 +19,10 @@ void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
                 std::string, std::pair<endpoint_handler, parsed_templates>>());
     }
 
-    routes_.at(method).emplace(uri, std::make_pair(handler, templates));
+    routes_.at(method).emplace(
+        uri, std::make_pair(std::move(handler), std::move(templates)));
     logger_.info(std::format("Registered new method.\nMethod: {}\nUri: {}",
-                             method, uri));
+                             std::move(method), std::move(uri)));
 }
 
 auto Dispatcher::checkRoute(const std::string& method,

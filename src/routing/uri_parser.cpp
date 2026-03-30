@@ -2,6 +2,7 @@
 #include "polonium/routing/uri_parser.hpp"
 
 #include <algorithm>
+#include <sstream>
 
 #include "polonium/routing/uri_params.hpp"
 
