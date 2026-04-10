@@ -9,6 +9,7 @@
 #include "polonium/http/response_serializer.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/socket_exceptions.hpp"
+#include "polonium/thread_pool.hpp"
 
 // TODO: Implement IPv6 support in future.
 
@@ -17,11 +18,9 @@ void ConnectionHandler::acceptConnection() {
     while (true) {
         std::pair<socket_fd, struct sockaddr_in> accepted_pair =
             ipv4_socket_.tcpAccept();
-        // Create a new thread per connetion.
-        // TODO: Add thread-pool.
-        std::thread([this, accepted_pair]() -> void {
+        thread_pool_.addTask([this, accepted_pair]() -> void {
             handleConnection(accepted_pair.first);
-        }).detach();
+        });
     }
 }
 
