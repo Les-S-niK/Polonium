@@ -11,8 +11,9 @@
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/tcp_socket.hpp"
+#include "polonium/thread_pool.hpp"
 
-// TODO: Implement IPv6 support in future.
+// TODO: lessnik - Implement IPv6 support in future.
 
 namespace socket_options {
 // Max backlog size for listen function. 10 is for tests. 128 or 4096 for
@@ -21,14 +22,14 @@ constexpr inline uint8_t max_backlog_size = 10;
 constexpr inline size_t max_buffer_size = 8192;
 }  // namespace socket_options
 
-
 class ConnectionHandler {
    public:
     ConnectionHandler(std::string host, uint16_t port, PoloniumLogger& logger,
-                      Dispatcher& dispatcher)
+                      Dispatcher& dispatcher, uint32_t workers_amount)
         : ipv4_socket_(logger),
           port_(port),
           host_(std::move(host)),
+          thread_pool_(workers_amount),
           dispatcher_(dispatcher),
           logger_(logger) {
         logger_.trace(__func__);
@@ -45,6 +46,7 @@ class ConnectionHandler {
     TcpIpv4Socket ipv4_socket_;
     uint16_t port_;
     std::string host_;
+    ThreadPool thread_pool_;
     Dispatcher& dispatcher_;
     PoloniumLogger& logger_;
 

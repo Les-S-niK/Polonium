@@ -1,7 +1,9 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
+#include <thread>
 #include <utility>
 
 #include "polonium/polonium_logger.hpp"
@@ -11,15 +13,17 @@
 
 class App {
    public:
-    App(const App&) = default;
+    App(const App&) = delete;
     App(App&&) = delete;
     auto operator=(const App&) -> App& = delete;
     auto operator=(App&&) -> App& = delete;
-    App(std::string host, uint16_t port, std::string_view logs_path,
-        const LoggerLevels& log_level)
+    App(std::string&& host, uint16_t port, std::string_view logs_path,
+        const LoggerLevels& log_level,
+        uint32_t workers_amount = std::jthread::hardware_concurrency())
         : logger_(PoloniumLogger::getInstance(logs_path, log_level)),
           dispatcher_(logger_),
-          connection_handler_(std::move(host), port, logger_, dispatcher_) {
+          connection_handler_(std::move(host), port, logger_, dispatcher_,
+                              workers_amount) {
         logger_.trace(__func__);
     }
     ~App() { logger_.trace(__func__); }
