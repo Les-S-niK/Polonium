@@ -12,6 +12,7 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
         return {};
     }
 
+    // Split both uri and template uri by default separator.
     std::vector<std::string> splitted_uri = splitUri(uri_);
     std::vector<std::string> splitted_uri_template = splitUri(uri_template_);
     if (splitted_uri.size() != splitted_uri_template.size()) {
@@ -19,7 +20,6 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
     }
 
     std::unordered_map<std::string, UriParamValue> parsed_values;
-
     for (size_t section = 0; section < splitted_uri.size(); section++) {
         auto found_template_it = params_template.find(section);
 
@@ -27,6 +27,7 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
             const UriParamTemplate& param_template =
                 (found_template_it->second);
 
+            // Check if param type is valid.
             if (param_template.type == uri_param_types::int_type) {
                 if (!tryConvertToInt(splitted_uri[section])) {
                     return {};
@@ -49,9 +50,9 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
 auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
     // {unsigned section: UtiParamTemplate(string type, string name)}
     parsed_templates path_params;
-    std::vector<std::string> splitted_uri = splitUri(uri_template_);
-    // TODO: Make better exception throwing.
-    if (!validateUriTemplateFirst()) {
+    std::vector<std::string> splitted_uri = UriParser::splitUri(uri_template_);
+    // TODO: lessnik - Make better exception throwing.
+    if (!validateUriSyntax()) {
         throw std::runtime_error("Incorrect URI template!");
     }
 
@@ -59,9 +60,8 @@ auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
         std::string_view current_str = splitted_uri.at(section);
 
         if (current_str.front() == '{') {
-            auto optional_type_and_name =
-                validateUriTemplateSecond(current_str);
-            // TODO: Make better exception throwing.
+            auto optional_type_and_name = parseUriTemplate(current_str);
+            // TODO: lessnik - Make better exception throwing.
             if (!optional_type_and_name) {
                 throw std::runtime_error("Incorrect URI template!");
             }
@@ -73,10 +73,12 @@ auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
     return path_params;
 }
 
-auto UriTemplateParser::validateUriTemplateFirst() const noexcept -> bool {
+auto UriTemplateParser::validateUriSyntax() const noexcept -> bool {
     if (uri_template_.empty()) {
         return false;
     }
+    // URI in must starts with "/"
+    // Example: /users/123/
     if (uri_template_.front() != '/') {
         return false;
     }
@@ -87,6 +89,8 @@ auto UriTemplateParser::validateUriTemplateFirst() const noexcept -> bool {
         const char& char_ = uri_template_.at(index);
         switch (char_) {
             case '{':
+                // Check if the previous char is "/"
+                // ( "{" can be only after "/" and before "}" )
                 if (index > 0 && uri_template_.at(index - 1) != '/') {
                     return false;
                 }
@@ -97,6 +101,8 @@ auto UriTemplateParser::validateUriTemplateFirst() const noexcept -> bool {
                 brace_amount++;
                 break;
             case '}':
+                // Check if the next char is "/"
+                // ( "}" can be only after "{" and before "/" )
                 if (index + 1 < uri_template_.size() &&
                     uri_template_.at(index + 1) != '/') {
                     return false;
@@ -108,11 +114,14 @@ auto UriTemplateParser::validateUriTemplateFirst() const noexcept -> bool {
                 brace_amount--;
                 break;
             case ' ':
+                // Space is available only inside brackets.
                 if (!inside_brackets) {
                     return false;
                 }
                 break;
             case '/':
+                // "/" is not allowed in dynamic URI templates.
+                // ( Inside brackets. )
                 if (inside_brackets) {
                     return false;
                 }
@@ -122,27 +131,28 @@ auto UriTemplateParser::validateUriTemplateFirst() const noexcept -> bool {
     return brace_amount == 0;
 }
 
-auto UriTemplateParser::validateUriTemplateSecond(
-    std::string_view uri_param_template)
+auto UriTemplateParser::parseUriTemplate(std::string_view uri_param_template)
     -> std::optional<std::pair<std::string, std::string>> {
-    using namespace uri_param_types;
+    using uri_param_types::allowed_types;
+
+    // Search matches with URI param template by pattern: "type name".
+    // Example: "/{str username}/"
     const auto match = ctre::search<pattern>(uri_param_template);
     const std::optional<std::string> type = match.get<1>().to_optional_string();
     const std::optional<std::string> name = match.get<2>().to_optional_string();
-
     if (!type || !name) {
         return std::nullopt;
     }
+
     const auto* found_type = std::ranges::find(allowed_types, type.value());
-    // TODO: Make better exception throwing.
+    // TODO: lessnik - Make better exception throwing.
     if (found_type == std::end(allowed_types)) {
         throw std::runtime_error("Incorrect template param type!");
     }
-
     return std::make_pair(type.value(), name.value());
 }
 
-auto splitUri(std::string_view uri, char separator)
+auto UriParser::splitUri(std::string_view uri, char separator)
     -> std::vector<std::string> {
     std::vector<std::string> splitted_uri;
     std::string token;
