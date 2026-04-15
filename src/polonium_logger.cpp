@@ -3,8 +3,7 @@
 
 #include <cstring>
 #include <iostream>
-
-PoloniumLogger* PoloniumLogger::instance_ptr_ = nullptr;
+#include <print>
 
 PoloniumLogger::PoloniumLogger(const path& log_dir,
                                const LoggerLevels& log_level)
@@ -19,9 +18,8 @@ PoloniumLogger::PoloniumLogger(const path& log_dir,
 
     log_file_.open(log_file_path_, std::ios::app);
     if (!log_file_.is_open()) {
-        std::cout << logger_colors::error << logger_levels_text::error
-                  << "Can't open log file" << logger_colors::color_default
-                  << '\n';
+        std::println("{}{}Can not open log file.{}", logger_colors::error,
+                     logger_levels_text::error, logger_colors::color_default);
     }
 }
 
@@ -37,19 +35,19 @@ void PoloniumLogger::newMessage(std::string_view message,
         getCurrentTime(logger_date_formats::log_str_format);
 
     if (!message.contains('\n')) {
-        std::cout << message_color << current_time << " " << pre_message_text
-                  << message << logger_colors::color_default << '\n';
+        std::println("{}{} {}{}{}", message_color, current_time,
+                     pre_message_text, message, logger_colors::color_default);
     } else {
-        std::cout << message_color << current_time << " " << pre_message_text;
+        std::print("{}{} {}", message_color, current_time, pre_message_text);
         for (const char& symb : message) {
             if (symb == '\n') {
-                std::cout << logger_colors::color_default << symb
-                          << message_color;
+                std::print("{}{}{}", logger_colors::color_default, symb,
+                           message_color);
             } else {
-                std::cout << symb;
+                std::print("{}", symb);
             }
         }
-        std::cout << logger_colors::color_default << '\n';
+        std::println("{}", logger_colors::color_default);
     }
     log_file_ << current_time << " " << pre_message_text << message << '\n';
 }

@@ -2,7 +2,6 @@
 #include "polonium/sockets/connection_handler.hpp"
 
 #include <functional>
-#include <thread>
 
 #include "polonium/http/http.hpp"
 #include "polonium/http/request_parser.hpp"
