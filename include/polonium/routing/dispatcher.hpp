@@ -1,36 +1,42 @@
 
 #pragma once
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 
-#include "polonium/routing/api_responses.hpp"
 #include "polonium/http/http.hpp"
 #include "polonium/polonium_logger.hpp"
+#include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
-// TODO: Replace std::function by template with concept.
+template <typename F, typename Ret, typename... Args>
+concept is_endpoint_handler =
+    std::invocable<F, HttpRequest&&> and
+    std::same_as<Ret, std::invoke_result_t<F, Args...>>;
+
 using endpoint_handler =
-    std::function<std::shared_ptr<ApiResponse>(HttpRequest&& request)>;
+    std::move_only_function<std::shared_ptr<ApiResponse>(HttpRequest&&)>;
 using routes_table = std::unordered_map<
     std::string, std::unordered_map<std::string, std::pair<endpoint_handler,
                                                            parsed_templates>>>;
 
+template <is_endpoint_handler<std::shared_ptr<ApiResponse>, HttpRequest&&> F>
 struct HandlerWithParams {
     HandlerWithParams(
-        endpoint_handler handler,
-        std::unordered_map<std::string, UriParamValue> path_params)
-        : handler(handler), path_params(std::move(path_params)) {}
-    HandlerWithParams(
+        F&& handler, std::unordered_map<std::string, UriParamValue> path_params)
+        : handler(std::move(handler)), path_params(std::move(path_params)) {}
+    explicit HandlerWithParams(
         std::unordered_map<std::string, UriParamValue> path_params)
         : path_params(std::move(path_params)) {}
     HandlerWithParams() = default;
 
-    std::optional<endpoint_handler> handler = std::nullopt;
+    std::optional<endpoint_handler> handler;
     std::unordered_map<std::string, UriParamValue> path_params;
 };
 
@@ -40,15 +46,15 @@ class Dispatcher {
     Dispatcher(Dispatcher&&) = delete;
     auto operator=(const Dispatcher&) -> Dispatcher& = delete;
     auto operator=(Dispatcher&&) -> Dispatcher& = delete;
-    Dispatcher(PoloniumLogger& logger) : logger_(logger) {
-        logger.trace(__func__);
+    explicit Dispatcher() : logger_(PoloniumLogger::getInstance()) {
+        logger_.trace(__func__);
     }
     ~Dispatcher() { logger_.trace(__func__); }
     void registerMethod(std::string&& method, std::string&& uri,
                         endpoint_handler&& handler,
                         parsed_templates&& templates);
-    auto checkRoute(const std::string& method, const std::string& uri) const
-        -> HandlerWithParams;
+    auto checkRoute(const std::string& method, const std::string& uri)
+        -> HandlerWithParams<endpoint_handler>;
 
    private:
     PoloniumLogger& logger_;

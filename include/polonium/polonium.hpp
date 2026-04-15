@@ -21,7 +21,6 @@ class App {
         const LoggerLevels& log_level,
         uint32_t workers_amount = std::jthread::hardware_concurrency())
         : logger_(PoloniumLogger::getInstance(logs_path, log_level)),
-          dispatcher_(logger_),
           connection_handler_(std::move(host), port, logger_, dispatcher_,
                               workers_amount) {
         logger_.trace(__func__);
