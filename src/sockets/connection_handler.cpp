@@ -24,7 +24,7 @@ void ConnectionHandler::acceptConnection() {
 }
 
 void ConnectionHandler::handleConnection(int client_fd) {
-    HttpRequestParser request_parser(logger_);
+    HttpRequestParser request_parser;
 
     while (true) {
         std::string buffer;
@@ -52,11 +52,11 @@ void ConnectionHandler::handleConnection(int client_fd) {
 
             if (!handler_with_params.handler) {
                 // Endpoint not found. Serializing 404 (Not Found) response.
-                logger_.info("Endpoint not found.");
+                logger_->info("Endpoint not found.");
 
                 std::string response =
                     HttpResponseSerializer(
-                        logger_, response_templates::get404ErrorResponse())
+                        response_templates::get404ErrorResponse())
                         .serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
@@ -66,7 +66,7 @@ void ConnectionHandler::handleConnection(int client_fd) {
                  * ApiResponse subclass object. Move headers and body from the
                  * object.
                  */
-                logger_.info("Accepted connection to the existing endpoint.");
+                logger_->info("Accepted connection to the existing endpoint.");
                 if (!handler_with_params.path_params.empty()) {
                     for (auto value : handler_with_params.path_params) {
                         request.path_params.emplace(value);
@@ -90,8 +90,7 @@ void ConnectionHandler::handleConnection(int client_fd) {
                 http_response.body = api_response->getContent();
 
                 std::string response =
-                    HttpResponseSerializer(logger_, http_response)
-                        .serializeResponse();
+                    HttpResponseSerializer(http_response).serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }

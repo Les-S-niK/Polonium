@@ -34,9 +34,8 @@ struct Route {
 
 class PoloniumRouter {
    public:
-    std::string main_uri;
-    PoloniumLogger& logger_ = PoloniumLogger::getInstance();
-    PoloniumRouter(std::string_view default_uri = "") : main_uri(default_uri) {}
+    explicit PoloniumRouter(std::string_view default_uri = "")
+        : main_uri(default_uri), logger_(PoloniumLogger::getInstance()) {}
 
     void get(const std::string& uri, endpoint_handler handler) {
         newMethod(http_methods::get, uri, std::move(handler));
@@ -67,21 +66,24 @@ class PoloniumRouter {
     }
 
     void includeDispatcher(Dispatcher& dispatcher) noexcept {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         for (auto& [method, uri, handler, templates] : routes_) {
             dispatcher.registerMethod(std::move(method), std::move(uri),
                                       std::move(handler), std::move(templates));
         }
         routes_.clear();
-        logger_.debug("Methods are included in the dispatcher.");
+        logger_->debug("Methods are included in the dispatcher.");
     }
+
+    std::string main_uri;
 
    private:
     std::vector<Route> routes_;
+    PoloniumLogger* logger_;
 
     void newMethod(const char* method, const std::string& uri,
                    endpoint_handler handler) {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         routes_.emplace_back(method, main_uri + uri, std::move(handler));
     }
 };

@@ -14,17 +14,17 @@ inline constexpr const char* gmt_time_format = "%a, %d %b %Y %H:%M:%S GMT";
 
 class HttpResponseSerializer {
    public:
+    explicit HttpResponseSerializer(const HttpResponse& response)
+        : logger_(PoloniumLogger::getInstance()), response_(response) {}
     HttpResponseSerializer(const HttpResponseSerializer&) = delete;
     HttpResponseSerializer(HttpResponseSerializer&&) = delete;
     auto operator=(const HttpResponseSerializer&)
         -> HttpResponseSerializer = delete;
     auto operator=(HttpResponseSerializer&&) -> HttpResponseSerializer = delete;
-    HttpResponseSerializer(PoloniumLogger& logger, const HttpResponse& response)
-        : logger_(logger), response_(response) {}
     ~HttpResponseSerializer() = default;
 
     [[nodiscard]] auto serializeResponse() const -> std::string {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         std::string response_buffer;
         constexpr size_t default_response_buffer_size = 2048;
         response_buffer.reserve(default_response_buffer_size);
@@ -47,7 +47,7 @@ class HttpResponseSerializer {
     }
 
     static auto getCurrentGmtTime() -> std::string {
-        using namespace std::chrono;
+        using std::chrono::system_clock;
         std::stringstream str_stream;
 
         auto current_time = system_clock::now();
@@ -61,7 +61,7 @@ class HttpResponseSerializer {
     }
 
    private:
-    PoloniumLogger& logger_;
+    PoloniumLogger* logger_;
     const HttpResponse& response_;
     std::string http_response_;
 };
