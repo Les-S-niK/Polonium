@@ -75,10 +75,6 @@ void ConnectionHandler::handleConnection(int client_fd) {
                     }
                 }
                 logger_->debug("Getting API response object.");
-                std::println("URI: {}. Method: {}", request.uri,
-                             request.method);
-                std::println("Has value: {}",
-                             handler_with_params.handler.has_value());
                 std::shared_ptr<ApiResponse> api_response =
                     handler_with_params.handler.value()(std::move(request));
 
