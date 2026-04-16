@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <print>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -53,19 +54,19 @@ class PoloniumLogger {
     auto operator=(const PoloniumLogger&) -> PoloniumLogger& = delete;
 
     static auto getInstance(const path& log_dir, const LoggerLevels& log_level)
-        -> PoloniumLogger& {
+        -> PoloniumLogger* {
         static PoloniumLogger logger(log_dir, log_level);
         instance_ptr_ = &logger;
-        return logger;
+        return &logger;
     }
 
-    static auto getInstance() -> PoloniumLogger& {
+    static auto getInstance() -> PoloniumLogger* {
         if (instance_ptr_ == nullptr) {
             throw std::runtime_error(
                 "Logger not initialized. Call getInstance(log_dir, log_level) "
                 "first.");
         }
-        return *instance_ptr_;
+        return instance_ptr_;
     }
 
     void trace(std::string_view message) {
@@ -99,22 +100,22 @@ class PoloniumLogger {
     }
 
    private:
+    static inline PoloniumLogger* instance_ptr_ = nullptr;
+
     PoloniumLogger(const path& log_dir, const LoggerLevels& log_level);
     ~PoloniumLogger() {
         if (log_file_.is_open()) {
             log_file_.close();
         }
     }
+    void newMessage(std::string_view message, const LoggerLevels& message_level,
+                    std::string_view message_color,
+                    std::string_view pre_message_text);
+    static auto getCurrentTime(std::string_view format) -> std::string;
 
     path log_dir_path_;
     path log_file_path_;
     LoggerLevels log_level_ = LoggerLevels::Debug;
     std::mutex logger_mtx_;
     std::fstream log_file_;
-    static PoloniumLogger* instance_ptr_;
-
-    void newMessage(std::string_view message, const LoggerLevels& message_level,
-                    std::string_view message_color,
-                    std::string_view pre_message_text);
-    static auto getCurrentTime(std::string_view format) -> std::string;
 };

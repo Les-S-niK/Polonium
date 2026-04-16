@@ -21,14 +21,14 @@ class App {
         const LoggerLevels& log_level,
         uint32_t workers_amount = std::jthread::hardware_concurrency())
         : logger_(PoloniumLogger::getInstance(logs_path, log_level)),
-          connection_handler_(std::move(host), port, logger_, dispatcher_,
+          connection_handler_(std::move(host), port, dispatcher_,
                               workers_amount) {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
     }
-    ~App() { logger_.trace(__func__); }
+    ~App() { logger_->trace(__func__); }
 
     void includeRouter(PoloniumRouter* router) {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         router->includeDispatcher(dispatcher_);
         if (router != nullptr) {
             routers.push_back(router);
@@ -36,12 +36,12 @@ class App {
     }
 
     void start() {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         connection_handler_.acceptConnection();
     }
 
    private:
-    PoloniumLogger& logger_;
+    PoloniumLogger* logger_;
     Dispatcher dispatcher_;
     ConnectionHandler connection_handler_;
     std::vector<PoloniumRouter*> routers;

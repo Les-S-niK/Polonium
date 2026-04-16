@@ -2,7 +2,8 @@
 #include "polonium/sockets/connection_handler.hpp"
 
 #include <functional>
-#include <thread>
+#include <memory>
+#include <print>
 
 #include "polonium/http/http.hpp"
 #include "polonium/http/request_parser.hpp"
@@ -25,7 +26,7 @@ void ConnectionHandler::acceptConnection() {
 }
 
 void ConnectionHandler::handleConnection(int client_fd) {
-    HttpRequestParser request_parser(logger_);
+    HttpRequestParser request_parser;
 
     while (true) {
         std::string buffer;
@@ -53,11 +54,11 @@ void ConnectionHandler::handleConnection(int client_fd) {
 
             if (!handler_with_params.handler) {
                 // Endpoint not found. Serializing 404 (Not Found) response.
-                logger_.info("Endpoint not found.");
+                logger_->info("Endpoint not found.");
 
                 std::string response =
                     HttpResponseSerializer(
-                        logger_, response_templates::get404ErrorResponse())
+                        response_templates::get404ErrorResponse())
                         .serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
@@ -67,15 +68,17 @@ void ConnectionHandler::handleConnection(int client_fd) {
                  * ApiResponse subclass object. Move headers and body from the
                  * object.
                  */
-                logger_.info("Accepted connection to the existing endpoint.");
+                logger_->info("Accepted connection to the existing endpoint.");
                 if (!handler_with_params.path_params.empty()) {
                     for (auto value : handler_with_params.path_params) {
                         request.path_params.emplace(value);
                     }
                 }
-                auto api_response =
+                logger_->debug("Getting API response object.");
+                std::shared_ptr<ApiResponse> api_response =
                     handler_with_params.handler.value()(std::move(request));
 
+                logger_->debug("Instantiate HttpResponse object.");
                 HttpResponse http_response(http_options::protocol,
                                            http_options::version_1_1,
                                            api_response->status_code);
@@ -90,12 +93,13 @@ void ConnectionHandler::handleConnection(int client_fd) {
                 }
                 http_response.body = api_response->getContent();
 
+                logger_->debug("Serializing response...");
                 std::string response =
-                    HttpResponseSerializer(logger_, http_response)
-                        .serializeResponse();
+                    HttpResponseSerializer(http_response).serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
+            logger_->debug("Send the response to the client.");
             try {
                 ipv4_socket_.tcpSend(client_fd, response_buffer);
             } catch (socket_exception&) {

@@ -89,7 +89,7 @@ class ThreadPool {
      */
     template <is_callable F>
     auto addTask(F&& func) -> void {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         tasks_.pushBack(std::forward<F>(func));
     }
 
@@ -97,7 +97,7 @@ class ThreadPool {
     std::mutex mutex_;
     ThreadSafeDeque<std::move_only_function<void(void)>> tasks_;
     std::stop_source ssource_{};
-    PoloniumLogger& logger_ = PoloniumLogger::getInstance();
+    PoloniumLogger* logger_ = PoloniumLogger::getInstance();
     std::vector<std::jthread> workers_;
 
     /**
@@ -115,10 +115,10 @@ class ThreadPool {
      * Requests stop for all jthreads and wake up all them.
      */
     void shutdown() {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
         ssource_.request_stop();
-        logger_.info("Requested stop for all the threads.");
+        logger_->info("Requested stop for all the threads.");
         tasks_.wakeAllThreads();
-        logger_.info("Threads have stopped.");
+        logger_->info("Threads have stopped.");
     }
 };

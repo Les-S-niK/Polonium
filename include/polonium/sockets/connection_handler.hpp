@@ -24,16 +24,15 @@ constexpr inline size_t max_buffer_size = 8192;
 
 class ConnectionHandler {
    public:
-    ConnectionHandler(std::string host, uint16_t port, PoloniumLogger& logger,
-                      Dispatcher& dispatcher, uint32_t workers_amount)
-        : ipv4_socket_(logger),
-          port_(port),
+    ConnectionHandler(std::string host, uint16_t port, Dispatcher& dispatcher,
+                      uint32_t workers_amount)
+        : port_(port),
           host_(std::move(host)),
           thread_pool_(workers_amount),
           dispatcher_(dispatcher),
-          logger_(logger) {
-        logger_.trace(__func__);
-        logger.info("Connection Handler initialization.");
+          logger_(PoloniumLogger::getInstance()) {
+        logger_->trace(__func__);
+        logger_->info("Connection Handler initialization.");
         server_fd_ = ipv4_socket_.getServerSocketFd();
         ipv4_socket_.tcpBind(host_, port_);
         ipv4_socket_.tcpListen(socket_options::max_backlog_size);
@@ -48,7 +47,7 @@ class ConnectionHandler {
     std::string host_;
     ThreadPool thread_pool_;
     Dispatcher& dispatcher_;
-    PoloniumLogger& logger_;
+    PoloniumLogger* logger_;
 
     void handleConnection(int client_fd);
 };

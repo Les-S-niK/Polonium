@@ -21,7 +21,7 @@ concept is_endpoint_handler =
     std::same_as<Ret, std::invoke_result_t<F, Args...>>;
 
 using endpoint_handler =
-    std::move_only_function<std::shared_ptr<ApiResponse>(HttpRequest&&)>;
+    std::function<std::shared_ptr<ApiResponse>(HttpRequest&&)>;
 using routes_table = std::unordered_map<
     std::string, std::unordered_map<std::string, std::pair<endpoint_handler,
                                                            parsed_templates>>>;
@@ -29,8 +29,9 @@ using routes_table = std::unordered_map<
 template <is_endpoint_handler<std::shared_ptr<ApiResponse>, HttpRequest&&> F>
 struct HandlerWithParams {
     HandlerWithParams(
-        F&& handler, std::unordered_map<std::string, UriParamValue> path_params)
-        : handler(std::move(handler)), path_params(std::move(path_params)) {}
+        const F& handler,
+        std::unordered_map<std::string, UriParamValue> path_params)
+        : handler(handler), path_params(std::move(path_params)) {}
     explicit HandlerWithParams(
         std::unordered_map<std::string, UriParamValue> path_params)
         : path_params(std::move(path_params)) {}
@@ -47,16 +48,16 @@ class Dispatcher {
     auto operator=(const Dispatcher&) -> Dispatcher& = delete;
     auto operator=(Dispatcher&&) -> Dispatcher& = delete;
     explicit Dispatcher() : logger_(PoloniumLogger::getInstance()) {
-        logger_.trace(__func__);
+        logger_->trace(__func__);
     }
-    ~Dispatcher() { logger_.trace(__func__); }
+    ~Dispatcher() { logger_->trace(__func__); }
     void registerMethod(std::string&& method, std::string&& uri,
-                        endpoint_handler&& handler,
+                        const endpoint_handler& handler,
                         parsed_templates&& templates);
     auto checkRoute(const std::string& method, const std::string& uri)
         -> HandlerWithParams<endpoint_handler>;
 
    private:
-    PoloniumLogger& logger_;
+    PoloniumLogger* logger_;
     routes_table routes_;
 };
