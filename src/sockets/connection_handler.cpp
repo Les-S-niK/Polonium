@@ -2,6 +2,8 @@
 #include "polonium/sockets/connection_handler.hpp"
 
 #include <functional>
+#include <memory>
+#include <print>
 
 #include "polonium/http/http.hpp"
 #include "polonium/http/request_parser.hpp"
@@ -72,9 +74,15 @@ void ConnectionHandler::handleConnection(int client_fd) {
                         request.path_params.emplace(value);
                     }
                 }
-                auto api_response =
+                logger_->debug("Getting API response object.");
+                std::println("URI: {}. Method: {}", request.uri,
+                             request.method);
+                std::println("Has value: {}",
+                             handler_with_params.handler.has_value());
+                std::shared_ptr<ApiResponse> api_response =
                     handler_with_params.handler.value()(std::move(request));
 
+                logger_->debug("Instantiate HttpResponse object.");
                 HttpResponse http_response(http_options::protocol,
                                            http_options::version_1_1,
                                            api_response->status_code);
@@ -89,11 +97,13 @@ void ConnectionHandler::handleConnection(int client_fd) {
                 }
                 http_response.body = api_response->getContent();
 
+                logger_->debug("Serializing response...");
                 std::string response =
                     HttpResponseSerializer(http_response).serializeResponse();
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             }
+            logger_->debug("Send the response to the client.");
             try {
                 ipv4_socket_.tcpSend(client_fd, response_buffer);
             } catch (socket_exception&) {

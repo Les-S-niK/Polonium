@@ -8,7 +8,7 @@
 #include "polonium/routing/uri_parser.hpp"
 
 void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
-                                endpoint_handler&& handler,
+                                const endpoint_handler& handler,
                                 parsed_templates&& templates) {
     logger_->trace(__func__);
 
@@ -19,8 +19,8 @@ void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
                 std::string, std::pair<endpoint_handler, parsed_templates>>());
     }
 
-    routes_.at(method).emplace(
-        uri, std::make_pair(std::move(handler), std::move(templates)));
+    routes_.at(method).emplace(uri,
+                               std::make_pair(handler, std::move(templates)));
     logger_->info(std::format("Registered new method.\nMethod: {}\nUri: {}",
                               std::move(method), std::move(uri)));
 }
@@ -38,7 +38,7 @@ auto Dispatcher::checkRoute(const std::string& method, const std::string& uri)
             // The URI of the method is static and it was found. //
             logger_->debug(std::format(
                 "Endpoint was found.\nMethod: {}\nUri: {}", method, uri));
-            return {std::move(found_uri->second.first), {}};
+            return {found_uri->second.first, {}};
         }
         // The URI of the method is dynamic or it wasn't found. //
         // Need to search in the table of dynamic URIs. //
@@ -57,7 +57,7 @@ auto Dispatcher::checkRoute(const std::string& method, const std::string& uri)
                 logger_->debug(
                     "Parsed templates map isn't empty. Trying to get "
                     "values from the URI.");
-                return {std::move(uri_template.second.first), parsed_values};
+                return {uri_template.second.first, parsed_values};
             }
         }
     }
