@@ -28,7 +28,7 @@ void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
 auto Dispatcher::checkRoute(const std::string& method, const std::string& uri)
     -> HandlerWithParams<endpoint_handler> {
     logger_->trace(__func__);
-    logger_->debug(
+    logger_->info(
         std::format("Check router.\nMethod: {}\nUri: {}", method, uri));
 
     if (const auto found_method = routes_.find(method);
