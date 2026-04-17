@@ -80,14 +80,14 @@ void ConnectionHandler::handleConnection(int client_fd) {
                 logger_->debug("Instantiate HttpResponse object.");
                 HttpResponse http_response(http_options::protocol,
                                            http_options::version_1_1,
-                                           api_response->status_code);
+                                           api_response->getStatusCode());
                 http_response.headers[http_headers::content_length] =
                     std::to_string(api_response->getContent().size());
                 http_response.headers[http_headers::content_type] =
                     "application/json; charset=utf-8";
 
                 for (std::pair<std::string, std::string> header :
-                     api_response->headers) {
+                     api_response->getHeaders()) {
                     http_response.headers.insert(std::move(header));
                 }
                 http_response.body = api_response->getContent();
