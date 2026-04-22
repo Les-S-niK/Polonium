@@ -11,14 +11,14 @@
 #include <cstdio>
 #include <cstring>
 #include <format>
+#include <iterator>
 #include <string>
 #include <system_error>
 #include <utility>
 
 #include "polonium/polonium_logger.hpp"
+#include "polonium/sockets/socket_config.hpp"
 #include "polonium/sockets/socket_exceptions.hpp"
-
-using socket_fd = int;
 
 namespace exception_messages {
 inline constexpr const char* tcp_socket =
@@ -113,11 +113,10 @@ class TcpIpv4Socket {
         return std::make_pair(client_fd, client_addr);
     }
 
-    auto tcpRecv(const socket_fd& client_fd, const size_t& max_buffer_size,
-                 const int flags = 0) -> std::string {
+    auto tcpRecv(const socket_fd& client_fd, const int flags = 0)
+        -> std::string {
         logger_->trace(__func__);
-        std::string buffer;
-        buffer.resize(max_buffer_size);
+        std::array<char, socket_options::max_buffer_size> buffer{};
 
         ssize_t recieved_size =
             recv(client_fd, buffer.data(), buffer.size(), flags);
@@ -125,14 +124,11 @@ class TcpIpv4Socket {
         if (recieved_size == -1) {
             logAndThrowException_(exception_messages::tcp_recv);
         } else if (recieved_size == 0) {
-            buffer.clear();
-        } else {
-            buffer.resize(recieved_size);
+            return {};
         }
         logger_->debug(
-            std::format("Recieved buffer with the size: {}", buffer.size()));
-
-        return buffer;
+            std::format("Recieved buffer with the size: {}", recieved_size));
+        return {buffer.begin(), std::next(buffer.begin(), recieved_size)};
     }
 
     void tcpSend(const socket_fd& client_fd, std::string_view buffer,

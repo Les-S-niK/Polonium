@@ -8,6 +8,7 @@
 #include "polonium/http/request_parser.hpp"
 #include "polonium/http/response_serializer.hpp"
 #include "polonium/routing/dispatcher.hpp"
+#include "polonium/sockets/socket_config.hpp"
 #include "polonium/sockets/socket_exceptions.hpp"
 #include "polonium/thread_pool.hpp"
 
@@ -24,7 +25,7 @@ void ConnectionHandler::acceptConnection() {
     }
 }
 
-void ConnectionHandler::handleConnection(int client_fd) {
+void ConnectionHandler::handleConnection(socket_fd client_fd) {
     HttpRequestParser request_parser;
 
     while (true) {
@@ -32,8 +33,7 @@ void ConnectionHandler::handleConnection(int client_fd) {
         buffer.resize(socket_options::max_buffer_size);
 
         try {
-            buffer = ipv4_socket_.tcpRecv(client_fd,
-                                          socket_options::max_buffer_size);
+            buffer = ipv4_socket_.tcpRecv(client_fd);
         } catch (socket_exception& exception) {
             close(client_fd);
             return;
