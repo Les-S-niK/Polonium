@@ -45,7 +45,6 @@ class TcpIpv4Socket {
      * @return socket_fd: socket file descriptor.
      */
     [[nodiscard]] auto getServerSocketFd() const -> socket_fd;
-
     /**
      * @brief Bind TCP socket.
      *
@@ -53,14 +52,12 @@ class TcpIpv4Socket {
      * @param port: server port to open.
      */
     auto tcpBind(const std::string& host, const uint16_t& port) -> void;
-
     /**
      * @brief Set max socket backlog size via listen() function.
      *
      * @param max_backlog_size
      */
     auto tcpListen(const int& max_backlog_size) -> void;
-
     /**
      * @brief Accept a new client connection.
      *
@@ -68,33 +65,26 @@ class TcpIpv4Socket {
      * sockaddr_in.
      */
     auto tcpAccept() -> std::pair<socket_fd, struct sockaddr_in>;
-
     /**
      * @brief Receive bytes from client.
      *
      * @param client_fd
      * @param flags
      *
-     * @return std::string: received data as string.
+     * @return std::string: received data in string.
      */
     auto tcpRecv(const socket_fd& client_fd, int flags = 0) -> std::string;
-
     /**
      * @brief Send bytes to client.
      *
      * @param client_fd
-     * @param buffer: string buffer to send.
+     * @param buffer
      * @param flags
      */
     auto tcpSend(const socket_fd& client_fd, std::string_view buffer,
                  int flags = 0) -> void;
 
    private:
-    /**
-     * @brief Write occured error in log file and throw an exception.
-     *
-     * @param message: Message that will be written in the log file.
-     */
     auto logAndThrowException_(std::string_view message) const -> void;
 
     PoloniumLogger* logger_;
