@@ -7,6 +7,7 @@ add_library(
   src/routing/dispatcher.cpp
   src/polonium_logger.cpp
   src/http/request_parser.cpp
+  src/http/response_serializer.cpp
   src/routing/uri_parser.cpp
   src/http/http.cpp
   src/thread_pool.cpp)
