@@ -4,6 +4,7 @@ project(polonium CXX)
 add_library(
   polonium
   src/sockets/connection_handler.cpp
+  src/sockets/tcp_socket.cpp
   src/routing/dispatcher.cpp
   src/polonium_logger.cpp
   src/http/request_parser.cpp
