@@ -6,8 +6,6 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
-#include <print>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -54,60 +52,21 @@ class PoloniumLogger {
     auto operator=(const PoloniumLogger&) -> PoloniumLogger& = delete;
 
     static auto getInstance(const path& log_dir, const LoggerLevels& log_level)
-        -> PoloniumLogger* {
-        static PoloniumLogger logger(log_dir, log_level);
-        instance_ptr_ = &logger;
-        return &logger;
-    }
+        -> PoloniumLogger*;
+    static auto getInstance() -> PoloniumLogger*;
 
-    static auto getInstance() -> PoloniumLogger* {
-        if (instance_ptr_ == nullptr) {
-            throw std::runtime_error(
-                "Logger not initialized. Call getInstance(log_dir, log_level) "
-                "first.");
-        }
-        return instance_ptr_;
-    }
-
-    void trace(std::string_view message) {
-        newMessage(message, LoggerLevels::Trace, logger_colors::trace,
-                   logger_levels_text::trace);
-    }
-
-    void debug(std::string_view message) {
-        newMessage(message, LoggerLevels::Debug, logger_colors::debug,
-                   logger_levels_text::debug);
-    }
-
-    void info(std::string_view message) {
-        newMessage(message, LoggerLevels::Info, logger_colors::info,
-                   logger_levels_text::info);
-    }
-
-    void warning(std::string_view message) {
-        newMessage(message, LoggerLevels::Warning, logger_colors::warning,
-                   logger_levels_text::warning);
-    }
-
-    void error(std::string_view message) {
-        newMessage(message, LoggerLevels::Error, logger_colors::error,
-                   logger_levels_text::error);
-    }
-
-    void critical(std::string_view message) {
-        newMessage(message, LoggerLevels::Critical, logger_colors::critical,
-                   logger_levels_text::critical);
-    }
+    auto trace(std::string_view message) -> void;
+    auto debug(std::string_view message) -> void;
+    auto info(std::string_view message) -> void;
+    auto warning(std::string_view message) -> void;
+    auto error(std::string_view message) -> void;
+    auto critical(std::string_view message) -> void;
 
    private:
     static inline PoloniumLogger* instance_ptr_ = nullptr;
 
     PoloniumLogger(const path& log_dir, const LoggerLevels& log_level);
-    ~PoloniumLogger() {
-        if (log_file_.is_open()) {
-            log_file_.close();
-        }
-    }
+    ~PoloniumLogger();
     void newMessage(std::string_view message, const LoggerLevels& message_level,
                     std::string_view message_color,
                     std::string_view pre_message_text);

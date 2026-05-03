@@ -25,3 +25,19 @@ ThreadPool::ThreadPool(uint32_t workers_amount) {
             [this]() -> void { worker_loop(ssource_.get_token()); });
     }
 }
+
+auto ThreadPool::shutdown() -> void {
+    logger_->trace(__func__);
+    if (ssource_.stop_requested()) {
+        return;
+    }
+    ssource_.request_stop();
+    logger_->info("Requested stop for all the threads.");
+    tasks_.wakeAllThreads();
+}
+
+auto ThreadPool::worker_loop(const std::stop_token& stoken) -> void {
+    while (auto task = tasks_.popFirst(stoken)) {
+        task.value()();
+    }
+}

@@ -47,10 +47,9 @@ class Dispatcher {
     Dispatcher(Dispatcher&&) = delete;
     auto operator=(const Dispatcher&) -> Dispatcher& = delete;
     auto operator=(Dispatcher&&) -> Dispatcher& = delete;
-    explicit Dispatcher() : logger_(PoloniumLogger::getInstance()) {
-        logger_->trace(__func__);
-    }
-    ~Dispatcher() { logger_->trace(__func__); }
+    explicit Dispatcher();
+    ~Dispatcher();
+
     void registerMethod(std::string&& method, std::string&& uri,
                         const endpoint_handler& handler,
                         parsed_templates&& templates);

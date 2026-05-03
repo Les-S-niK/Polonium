@@ -237,6 +237,11 @@ constexpr std::pair<uint16_t, const char*> network_authentication_required_511 =
 }  // namespace status_codes
 
 struct HttpAction {
+    HttpAction() = default;
+    HttpAction(const HttpAction&) = default;
+    HttpAction(HttpAction&&) = default;
+    auto operator=(const HttpAction&) -> HttpAction& = default;
+    auto operator=(HttpAction&&) -> HttpAction& = default;
     virtual ~HttpAction() = default;
 
     /**
@@ -245,7 +250,7 @@ struct HttpAction {
      * @return json (nlohmann::json). Returns an empty json if parser can't
      * parse the body.
      */
-    auto getJson() const -> json { return json_actions::parseStringJson(body); }
+    [[nodiscard]] auto getJson() const -> json;
 
     /**
      * @brief Main protocol name. (HTTP)
@@ -273,11 +278,7 @@ struct HttpAction {
 struct HttpResponse final : public HttpAction {
     HttpResponse() = default;
     HttpResponse(const std::string& protocol, const std::string& version,
-                 const std::pair<const uint16_t, const char*> status)
-        : status_code(status.first), status_text(status.second) {
-        this->protocol = protocol;
-        this->version = version;
-    }
+                 std::pair<const uint16_t, const char*> status);
     uint16_t status_code{};
     std::string status_text;
 };
@@ -290,9 +291,5 @@ struct HttpRequest final : public HttpAction {
 
 namespace response_templates {
 auto create404ErrorResponse() -> HttpResponse;
-
-inline auto get404ErrorResponse() -> HttpResponse {
-    static HttpResponse error_404_response = create404ErrorResponse();
-    return error_404_response;
-}
+auto get404ErrorResponse() -> HttpResponse;
 }  // namespace response_templates

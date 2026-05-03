@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -24,8 +23,7 @@ class ApiResponse {
    public:
     ApiResponse() = default;
     ApiResponse(std::pair<uint16_t, const char*> status_code,
-                std::unordered_map<std::string, std::string> headers)
-        : status_code_(std::move(status_code)), headers_(std::move(headers)) {}
+                std::unordered_map<std::string, std::string> headers);
     ApiResponse(const ApiResponse&) = default;
     ApiResponse(ApiResponse&&) = delete;
     auto operator=(const ApiResponse&) -> ApiResponse& = default;
@@ -33,32 +31,16 @@ class ApiResponse {
     virtual ~ApiResponse() = default;
 
     virtual auto getContent() const -> std::string = 0;
-    virtual auto setContent(std::string_view content) -> void = 0;
-    virtual auto setContent(std::string&& content) -> void = 0;
-    auto getStatusCode() const noexcept -> std::pair<uint16_t, const char*> {
-        return status_code_;
-    }
-    auto setStatusCode(std::pair<uint16_t, const char*> status_code) noexcept {
-        status_code_ = status_code;
-    }
+
+    auto setStatusCode(std::pair<uint16_t, const char*> status_code) noexcept;
+    auto appendHeaders(std::pair<std::string, std::string>&& to_append) -> void;
+    auto appendHeaders(std::unordered_map<std::string, std::string>&& to_append)
+        -> void;
+    auto appendHeaders(std::string&& key, std::string&& value) -> void;
+
+    auto getStatusCode() const noexcept -> std::pair<uint16_t, const char*>;
     auto getHeaders() const noexcept
-        -> std::unordered_map<std::string, std::string> {
-        return headers_;
-    }
-    auto appendHeaders(const std::pair<std::string, std::string>&& to_append)
-        -> void {
-        headers_.insert(to_append);
-    }
-    auto appendHeaders(
-        const std::unordered_map<std::string, std::string>&& to_append)
-        -> void {
-        for (const auto& header : to_append) {
-            headers_.insert(header);
-        }
-    }
-    auto appendHeaders(std::string&& key, std::string&& value) -> void {
-        headers_.insert({std::move(key), std::move(value)});
-    }
+        -> std::unordered_map<std::string, std::string>;
 
    private:
     std::pair<uint16_t, const char*> status_code_;
@@ -66,47 +48,32 @@ class ApiResponse {
     std::unordered_map<std::string, std::string> headers_;
 };
 
-class JsonResponse final : public ApiResponse {
+class ApiResponseWithContent : public ApiResponse {
+   public:
+    virtual auto setContent(std::string_view content) -> void = 0;
+    virtual auto setContent(std::string&& content) -> void = 0;
+};
+
+class ApiResponseEmptyContent final : public ApiResponse {
+   public:
+    explicit ApiResponseEmptyContent(
+        const std::pair<uint16_t, const char*>& status_code =
+            status_codes::success_2xx::ok_200);
+    auto getContent() const -> std::string override { return {}; }
+};
+
+class JsonResponse final : public ApiResponseWithContent {
    public:
     explicit JsonResponse(const std::pair<uint16_t, const char*>& status_code =
-                              status_codes::success_2xx::ok_200) {
-        setStatusCode(status_code);
-    }
-    auto setContent(std::string_view content) -> void override {
-        content_ = json_actions::parseStringJson(content);
-    }
-    auto setContent(std::string&& content) -> void override {
-        content_ = json_actions::parseStringJson(std::move(content));
-    }
-    auto getContent() const -> std::string override { return content_.dump(); }
+                              status_codes::success_2xx::ok_200);
+
+    auto setContent(std::string_view content) -> void override;
+    auto setContent(std::string&& content) -> void override;
     auto appendContent(const std::string&& key, const std::string&& value)
-        -> void {
-        content_.emplace(key, value);
-    }
+        -> void;
+
+    auto getContent() const -> std::string override;
 
    private:
     json content_;
-};
-
-class NoResponse final : public ApiResponse {
-   public:
-    explicit NoResponse(const std::pair<uint16_t, const char*>& status_code =
-                            status_codes::success_2xx::ok_200) {
-        setStatusCode(status_code);
-    }
-    auto setContent([[maybe_unused]] std::string_view /*unused*/)
-        -> void override {
-        throwCanNotSetContent();
-    }
-    auto setContent([[maybe_unused]] std::string&& /*unused*/)
-        -> void override {
-        throwCanNotSetContent();
-    }
-    auto getContent() const -> std::string override { return {}; }
-
-   private:
-    static auto throwCanNotSetContent() -> void {
-        throw std::runtime_error(
-            "Incorrect action. Can not set content for this object. ");
-    }
 };
