@@ -17,17 +17,15 @@ inline constexpr std::array<std::string_view, 2> allowed_types = {int_type,
 using uri_path_params = std::vector<std::pair<std::string, std::string>>;
 
 struct UriParamTemplate {
-    UriParamTemplate(std::string type, std::string name)
-        : type(std::move(type)), name(std::move(name)) {}
+    UriParamTemplate(std::string type, std::string name);
+
     std::string type;
     std::string name;
 };
 
 struct UriParamValue {
-    UriParamValue(std::string_view type, std::string value)
-        : type(type), value(std::move(value)) {}
-    UriParamValue(std::string_view type, int value)
-        : type(type), value(std::to_string(value)) {}
+    UriParamValue(std::string_view type, std::string value);
+    UriParamValue(std::string_view type, int value);
 
     std::string_view type;
     std::string value;

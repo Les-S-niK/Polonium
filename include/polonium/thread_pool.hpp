@@ -96,15 +96,7 @@ class ThreadPool {
     /**
      * Requests stop for all jthreads and wake up all them.
      */
-    void shutdown() {
-        logger_->trace(__func__);
-        if (ssource_.stop_requested()) {
-            return;
-        }
-        ssource_.request_stop();
-        logger_->info("Requested stop for all the threads.");
-        tasks_.wakeAllThreads();
-    }
+    auto shutdown() -> void;
 
    private:
     std::mutex mutex_;
@@ -118,9 +110,5 @@ class ThreadPool {
      *
      * @param & stoken: stop token got from the stop source.
      */
-    void worker_loop(const std::stop_token& stoken) {
-        while (auto task = tasks_.popFirst(stoken)) {
-            task.value()();
-        }
-    }
+    auto worker_loop(const std::stop_token& stoken) -> void;
 };

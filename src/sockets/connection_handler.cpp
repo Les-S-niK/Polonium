@@ -13,6 +13,7 @@
 #include "polonium/http/request_parser.hpp"
 #include "polonium/http/response_serializer.hpp"
 #include "polonium/polonium_logger.hpp"
+#include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/socket_config.hpp"
 #include "polonium/sockets/socket_exceptions.hpp"

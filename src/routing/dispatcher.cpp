@@ -7,6 +7,11 @@
 
 #include "polonium/routing/uri_parser.hpp"
 
+Dispatcher::Dispatcher() : logger_(PoloniumLogger::getInstance()) {
+    logger_->trace(__func__);
+}
+Dispatcher::~Dispatcher() { logger_->trace(__func__); }
+
 void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
                                 const endpoint_handler& handler,
                                 parsed_templates&& templates) {

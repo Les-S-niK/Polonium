@@ -11,34 +11,19 @@
 #include "polonium/routing/polonium_router.hpp"
 #include "polonium/sockets/connection_handler.hpp"
 
-class App {
+class PoloniumApp {
    public:
-    App(const App&) = delete;
-    App(App&&) = delete;
-    auto operator=(const App&) -> App& = delete;
-    auto operator=(App&&) -> App& = delete;
-    App(std::string&& host, uint16_t port, std::string_view logs_path,
-        const LoggerLevels& log_level,
-        uint32_t workers_amount = std::jthread::hardware_concurrency())
-        : logger_(PoloniumLogger::getInstance(logs_path, log_level)),
-          connection_handler_(std::move(host), port, dispatcher_,
-                              workers_amount) {
-        logger_->trace(__func__);
-    }
-    ~App() { logger_->trace(__func__); }
+    PoloniumApp(std::string&& host, uint16_t port, std::string_view logs_path,
+                const LoggerLevels& log_level,
+                uint32_t workers_amount = std::jthread::hardware_concurrency());
+    PoloniumApp(const PoloniumApp&) = delete;
+    PoloniumApp(PoloniumApp&&) = delete;
+    auto operator=(const PoloniumApp&) -> PoloniumApp& = delete;
+    auto operator=(PoloniumApp&&) -> PoloniumApp& = delete;
+    ~PoloniumApp();
 
-    void includeRouter(PoloniumRouter* router) {
-        logger_->trace(__func__);
-        router->includeDispatcher(dispatcher_);
-        if (router != nullptr) {
-            routers.push_back(router);
-        }
-    }
-
-    void start() {
-        logger_->trace(__func__);
-        connection_handler_.acceptConnection();
-    }
+    auto includeRouter(PoloniumRouter* router) -> void;
+    auto start() -> void;
 
    private:
     PoloniumLogger* logger_;

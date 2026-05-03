@@ -23,10 +23,63 @@ PoloniumLogger::PoloniumLogger(const path& log_dir,
     }
 }
 
-void PoloniumLogger::newMessage(std::string_view message,
+PoloniumLogger::~PoloniumLogger() {
+    if (log_file_.is_open()) {
+        log_file_.close();
+    }
+}
+
+auto PoloniumLogger::getInstance(const path& log_dir,
+                                 const LoggerLevels& log_level)
+    -> PoloniumLogger* {
+    static PoloniumLogger logger(log_dir, log_level);
+    instance_ptr_ = &logger;
+    return &logger;
+}
+
+auto PoloniumLogger::getInstance() -> PoloniumLogger* {
+    if (instance_ptr_ == nullptr) {
+        throw std::runtime_error(
+            "Logger not initialized. Call getInstance(log_dir, log_level) "
+            "first.");
+    }
+    return instance_ptr_;
+}
+
+auto PoloniumLogger::trace(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Trace, logger_colors::trace,
+               logger_levels_text::trace);
+}
+
+auto PoloniumLogger::debug(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Debug, logger_colors::debug,
+               logger_levels_text::debug);
+}
+
+auto PoloniumLogger::info(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Info, logger_colors::info,
+               logger_levels_text::info);
+}
+
+auto PoloniumLogger::warning(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Warning, logger_colors::warning,
+               logger_levels_text::warning);
+}
+
+auto PoloniumLogger::error(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Error, logger_colors::error,
+               logger_levels_text::error);
+}
+
+auto PoloniumLogger::critical(std::string_view message) -> void {
+    newMessage(message, LoggerLevels::Critical, logger_colors::critical,
+               logger_levels_text::critical);
+}
+
+auto PoloniumLogger::newMessage(std::string_view message,
                                 const LoggerLevels& message_level,
                                 std::string_view message_color,
-                                std::string_view pre_message_text) {
+                                std::string_view pre_message_text) -> void {
     if (log_level_ > message_level) {
         return;
     }
