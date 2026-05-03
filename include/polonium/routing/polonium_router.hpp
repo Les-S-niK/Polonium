@@ -2,7 +2,6 @@
 #pragma once
 
 #include <string_view>
-#include <utility>
 
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
@@ -26,54 +25,24 @@ struct Route {
     endpoint_handler handler;
     parsed_templates templates;
 
-    Route(std::string method, const std::string& uri, endpoint_handler handler)
-        : method(std::move(method)), uri(uri), handler(std::move(handler)) {
-        templates = UriTemplateParser(uri).getUriParamsTemplate();
-    }
+    Route(std::string method, const std::string& uri, endpoint_handler handler);
 };
 
 class PoloniumRouter {
    public:
-    explicit PoloniumRouter(std::string_view default_uri = "")
-        : main_uri(default_uri), logger_(PoloniumLogger::getInstance()) {}
+    explicit PoloniumRouter(std::string_view default_uri = "");
 
-    void get(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::get, uri, std::move(handler));
-    }
-    void post(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::post, uri, std::move(handler));
-    }
-    void put(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::put, uri, std::move(handler));
-    }
-    void http_delete(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::http_delete, uri, std::move(handler));
-    }
-    void patch(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::patch, uri, std::move(handler));
-    }
-    void head(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::head, uri, std::move(handler));
-    }
-    void options(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::options, uri, std::move(handler));
-    }
-    void connect(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::connect, uri, std::move(handler));
-    }
-    void trace(const std::string& uri, endpoint_handler handler) {
-        newMethod(http_methods::trace, uri, std::move(handler));
-    }
+    auto includeDispatcher(Dispatcher& dispatcher) noexcept -> void;
 
-    void includeDispatcher(Dispatcher& dispatcher) noexcept {
-        logger_->trace(__func__);
-        for (auto& [method, uri, handler, templates] : routes_) {
-            dispatcher.registerMethod(std::move(method), std::move(uri),
-                                      std::move(handler), std::move(templates));
-        }
-        routes_.clear();
-        logger_->debug("Methods are included in the dispatcher.");
-    }
+    auto get(const std::string& uri, endpoint_handler handler) -> void;
+    auto post(const std::string& uri, endpoint_handler handler) -> void;
+    auto put(const std::string& uri, endpoint_handler handler) -> void;
+    auto deleteHttp(const std::string& uri, endpoint_handler handler) -> void;
+    auto patch(const std::string& uri, endpoint_handler handler) -> void;
+    auto head(const std::string& uri, endpoint_handler handler) -> void;
+    auto options(const std::string& uri, endpoint_handler handler) -> void;
+    auto connect(const std::string& uri, endpoint_handler handler) -> void;
+    auto trace(const std::string& uri, endpoint_handler handler) -> void;
 
     std::string main_uri;
 
@@ -81,9 +50,6 @@ class PoloniumRouter {
     std::vector<Route> routes_;
     PoloniumLogger* logger_;
 
-    void newMethod(const char* method, const std::string& uri,
-                   endpoint_handler handler) {
-        logger_->trace(__func__);
-        routes_.emplace_back(method, main_uri + uri, std::move(handler));
-    }
+    auto newMethod(const char* method, const std::string& uri,
+                   endpoint_handler handler) -> void;
 };
