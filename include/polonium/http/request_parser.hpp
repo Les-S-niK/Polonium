@@ -28,14 +28,13 @@ class HttpRequestParser {
     auto operator=(HttpRequestParser&&) -> HttpRequestParser = delete;
     ~HttpRequestParser();
 
-    void reset();
     auto feed(std::string_view to_accumulate) -> HttpRequestParserStatus;
-
     auto getRequest() const -> const HttpRequest&;
     auto hasRemainingData() const -> bool;
     auto isComplete() const -> bool;
     auto isKeepAlive() const -> bool;
     auto removeParsed() -> void;
+    auto reset() -> void;
 
    private:
     llhttp_t parser_{};
@@ -56,7 +55,7 @@ class HttpRequestParser {
     std::pair<std::string, std::string> temporary_pair_;
 
     auto parseAccumulated() -> HttpRequestParserStatus;
-    void setCallbacks();
+    auto setCallbacks() -> void;
 
     static auto handlerOnMessageBegin(llhttp_t* parser) -> int;
     /**
