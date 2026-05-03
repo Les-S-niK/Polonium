@@ -93,6 +93,19 @@ class ThreadPool {
         tasks_.pushBack(std::forward<F>(func));
     }
 
+    /**
+     * Requests stop for all jthreads and wake up all them.
+     */
+    void shutdown() {
+        logger_->trace(__func__);
+        if (ssource_.stop_requested()) {
+            return;
+        }
+        ssource_.request_stop();
+        logger_->info("Requested stop for all the threads.");
+        tasks_.wakeAllThreads();
+    }
+
    private:
     std::mutex mutex_;
     ThreadSafeDeque<std::move_only_function<void(void)>> tasks_;
@@ -109,16 +122,5 @@ class ThreadPool {
         while (auto task = tasks_.popFirst(stoken)) {
             task.value()();
         }
-    }
-
-    /**
-     * Requests stop for all jthreads and wake up all them.
-     */
-    void shutdown() {
-        logger_->trace(__func__);
-        ssource_.request_stop();
-        logger_->info("Requested stop for all the threads.");
-        tasks_.wakeAllThreads();
-        logger_->info("Threads have stopped.");
     }
 };

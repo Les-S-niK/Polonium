@@ -1,11 +1,19 @@
 #include "polonium/sockets/tcp_socket.hpp"
 
+#include <asm-generic/socket.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <array>
+#include <cerrno>
 #include <format>
 #include <iterator>
 #include <system_error>
 
 #include "polonium/sockets/socket_exceptions.hpp"
+
+// FIXME: Replace logAndThrowException_ method with "throw" by std::expected
+// with enum statuses. Delete STUB exceptions.
 
 TcpIpv4Socket::TcpIpv4Socket()
     : logger_(PoloniumLogger::getInstance()),
@@ -21,7 +29,8 @@ TcpIpv4Socket::TcpIpv4Socket()
 
 TcpIpv4Socket::~TcpIpv4Socket() {
     logger_->trace(__func__);
-    if (server_fd_ != 0) {
+    if (server_fd_ != -1) {
+        shutdown(server_fd_, SHUT_RDWR);
         close(server_fd_);
     }
     logger_->debug("Closed TCP/IPv4 socket.");
@@ -41,6 +50,15 @@ auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port)
     server_addr.sin_family = AF_INET;
     logger_->debug(std::format(
         "Try binding TCP/IPv4 socket.\nHost: {}\nPort: {}", host, port));
+
+    constexpr int enable = 1;
+    if (setsockopt(server_fd_, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) <
+            0 or
+        setsockopt(server_fd_, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) <
+            0) {
+        logAndThrowException_(
+            "Can not set socket option to reuse ADDR or PORT.");
+    }
 
     if (bind(server_fd_, reinterpret_cast<struct sockaddr*>(&server_addr),
              sizeof(server_addr)) == -1) {
@@ -67,6 +85,15 @@ auto TcpIpv4Socket::tcpAccept() -> std::pair<socket_fd, struct sockaddr_in> {
                &client_addr_len);
 
     if (client_fd == -1) {
+        if (int errno_core =
+                std::error_code(errno, std::generic_category()).value();
+            errno_core == EINTR) {
+            logger_->warning(
+                "Got SIGINT and correctly process this signal. Do not look at "
+                "exception below.");
+            // FIXME:
+            logAndThrowException_("STUB exception. Change after refactoring.");
+        }
         logAndThrowException_(exception_messages::tcp_accept);
     }
     std::array<char, praddr4_len> protoaddr{};
@@ -89,6 +116,15 @@ auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags)
         recv(client_fd, buffer.data(), buffer.size(), flags);
 
     if (recieved_size == -1) {
+        if (int errno_code =
+                std::error_code(errno, std::generic_category()).value();
+            errno_code == EAGAIN or errno_code == EWOULDBLOCK) {
+            logger_->warning(
+                "Correctly proccessed TIMEOUT exception. Do not look at "
+                "exception below.");
+            // FIXME:
+            logAndThrowException_("STUB exception. Change after refactoring.");
+        }
         logAndThrowException_(exception_messages::tcp_recv);
     } else if (recieved_size == 0) {
         return {};

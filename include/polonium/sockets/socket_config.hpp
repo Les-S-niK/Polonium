@@ -11,4 +11,5 @@ namespace socket_options {
 // production.
 constexpr inline uint8_t max_backlog_size = 10;
 constexpr inline size_t max_buffer_size = 8192;
+constexpr inline size_t timeout_seconds = 5;
 }  // namespace socket_options
