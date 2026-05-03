@@ -8,6 +8,108 @@
 #include "polonium/http/http.hpp"
 #include "polonium/polonium_logger.hpp"
 
+HttpRequestParser::~HttpRequestParser() {
+    logger_->trace(__func__);
+    llhttp_finish(&parser_);
+}
+
+auto HttpRequestParser::getRequest() const -> const HttpRequest& {
+    logger_->trace(__func__);
+    return request_;
+}
+auto HttpRequestParser::hasRemainingData() const -> bool {
+    logger_->trace(__func__);
+    return parsed_bytes_ < raw_request_.size();
+}
+auto HttpRequestParser::isComplete() const -> bool {
+    logger_->trace(__func__);
+    return is_complete_;
+}
+auto HttpRequestParser::isKeepAlive() const -> bool {
+    logger_->trace(__func__);
+    return is_keep_alive_;
+}
+void HttpRequestParser::removeParsed() {
+    logger_->trace(__func__);
+    raw_request_.erase(
+        raw_request_.begin(),
+        raw_request_.begin() + static_cast<int64_t>(parsed_bytes_));
+}
+
+auto HttpRequestParser::handlerOnMessageBegin(llhttp_t* parser) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    // Reset all the fields in the class instance.
+    self->reset();
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnMethod(llhttp_t* parser, const char* chunk_ptr,
+                                        size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.method.assign(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnUri(llhttp_t* parser, const char* chunk_ptr,
+                                     size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.uri.assign(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnProtocol(llhttp_t* parser,
+                                          const char* chunk_ptr, size_t length)
+    -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.protocol.assign(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnProtocolVersion(llhttp_t* parser,
+                                                 const char* chunk_ptr,
+                                                 size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.version.assign(chunk_ptr, length);
+    self->is_keep_alive_ = (llhttp_should_keep_alive(parser) != 0);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnHeaderField(llhttp_t* parser,
+                                             const char* chunk_ptr,
+                                             size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->temporary_pair_.first.assign(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnHeaderValue(llhttp_t* parser,
+                                             const char* chunk_ptr,
+                                             size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->temporary_pair_.second.assign(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnHeaderValueComplete(llhttp_t* parser) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.headers.emplace(std::move(self->temporary_pair_));
+    self->temporary_pair_ = {};
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnBody(llhttp_t* parser, const char* chunk_ptr,
+                                      size_t length) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->request_.body.append(chunk_ptr, length);
+    return 0;
+}
+
+auto HttpRequestParser::handlerOnMessageComplete(llhttp_t* parser) -> int {
+    auto* self = static_cast<HttpRequestParser*>(parser->data);
+    self->is_complete_ = true;
+    return 0;
+}
+
 HttpRequestParser::HttpRequestParser()
     : logger_(PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
@@ -21,16 +123,16 @@ HttpRequestParser::HttpRequestParser()
 
 auto HttpRequestParser::setCallbacks() -> void {
     logger_->trace(__func__);
-    settings_.on_message_begin = handler_on_message_begin;
-    settings_.on_method = handler_on_method;
-    settings_.on_url = handler_on_uri;
-    settings_.on_protocol = handler_on_protocol;
-    settings_.on_version = handler_on_protocol_version;
-    settings_.on_header_field = handler_on_header_field;
-    settings_.on_header_value = handler_on_header_value;
-    settings_.on_header_value_complete = handler_on_header_value_complete;
-    settings_.on_body = handler_on_body;
-    settings_.on_message_complete = handler_on_message_complete;
+    settings_.on_message_begin = handlerOnMessageBegin;
+    settings_.on_method = handlerOnMethod;
+    settings_.on_url = handlerOnUri;
+    settings_.on_protocol = handlerOnProtocol;
+    settings_.on_version = handlerOnProtocolVersion;
+    settings_.on_header_field = handlerOnHeaderField;
+    settings_.on_header_value = handlerOnHeaderValue;
+    settings_.on_header_value_complete = handlerOnHeaderValueComplete;
+    settings_.on_body = handlerOnBody;
+    settings_.on_message_complete = handlerOnMessageComplete;
 }
 
 auto HttpRequestParser::reset() -> void {
