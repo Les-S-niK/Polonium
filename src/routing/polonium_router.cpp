@@ -1,16 +1,34 @@
 
 #include "polonium/routing/polonium_router.hpp"
 
+#include <utility>
+
 #include "polonium/polonium_logger.hpp"
 
-Route::Route(std::string method, const std::string& uri,
-             endpoint_handler handler)
-    : method(std::move(method)), uri(uri), handler(std::move(handler)) {
-    templates = UriTemplateParser(uri).getUriParamsTemplate();
+Route::Route(std::string method, std::string uri, endpoint_handler handler)
+    : method(std::move(method)),
+      uri(std::move(uri)),
+      handler(std::move(handler)) {
+    templates = UriTemplateParser(this->uri).getUriParamsTemplate();
 }
 
-PoloniumRouter::PoloniumRouter(std::string_view default_uri)
-    : main_uri(default_uri), logger_(PoloniumLogger::getInstance()) {}
+PoloniumRouter::PoloniumRouter(std::string default_uri)
+    : default_uri_(std::move(default_uri)),
+      logger_(PoloniumLogger::getInstance()) {}
+
+[[nodiscard]] auto PoloniumRouter::getDefaultUri() const noexcept
+    -> std::string {
+    return default_uri_;
+}
+[[nodiscard]] auto PoloniumRouter::getDefaultUriView() const noexcept
+    -> std::string_view {
+    return default_uri_;
+}
+auto PoloniumRouter::setDefaultUri(std::string value) noexcept
+    -> PoloniumRouter& {
+    default_uri_ = std::move(value);
+    return *this;
+}
 
 auto PoloniumRouter::includeDispatcher(Dispatcher& dispatcher) noexcept
     -> void {
@@ -62,5 +80,5 @@ auto PoloniumRouter::trace(const std::string& uri, endpoint_handler handler)
 auto PoloniumRouter::newMethod(const char* method, const std::string& uri,
                                endpoint_handler handler) -> void {
     logger_->trace(__func__);
-    routes_.emplace_back(method, main_uri + uri, std::move(handler));
+    routes_.emplace_back(method, getDefaultUri() + uri, std::move(handler));
 }

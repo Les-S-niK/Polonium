@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string_view>
+#include <utility>
 
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
@@ -25,12 +26,16 @@ struct Route {
     endpoint_handler handler;
     parsed_templates templates;
 
-    Route(std::string method, const std::string& uri, endpoint_handler handler);
+    Route(std::string method, std::string uri, endpoint_handler handler);
 };
 
 class PoloniumRouter {
    public:
-    explicit PoloniumRouter(std::string_view default_uri = "");
+    explicit PoloniumRouter(std::string default_uri = "");
+
+    [[nodiscard]] auto getDefaultUri() const noexcept -> std::string;
+    [[nodiscard]] auto getDefaultUriView() const noexcept -> std::string_view;
+    auto setDefaultUri(std::string value) noexcept -> PoloniumRouter&;
 
     auto includeDispatcher(Dispatcher& dispatcher) noexcept -> void;
 
@@ -44,9 +49,8 @@ class PoloniumRouter {
     auto connect(const std::string& uri, endpoint_handler handler) -> void;
     auto trace(const std::string& uri, endpoint_handler handler) -> void;
 
-    std::string main_uri;
-
    private:
+    std::string default_uri_;
     std::vector<Route> routes_;
     PoloniumLogger* logger_;
 
