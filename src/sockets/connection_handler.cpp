@@ -36,6 +36,7 @@ ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
       logger_(PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->info("Connection Handler initialization.");
+
     auto result = std::signal(SIGINT, sigintHandler);
     if (result == SIG_ERR) {
         logger_->error("Could not assign sigintHandler");
@@ -51,7 +52,6 @@ auto ConnectionHandler::acceptConnection() -> void {
         try {
             accepted_pair = ipv4_socket_.tcpAccept();
         } catch (const socket_exception&) {
-            logger_->warning("Error ignored in tcpAccept.");
             continue;
         }
         socket_fd client_fd = accepted_pair.first;
@@ -68,7 +68,7 @@ auto ConnectionHandler::acceptConnection() -> void {
         thread_pool_.addTask(
             [this, client_fd]() -> void { handleConnection(client_fd); });
     }
-    logger_->info("Got an interrupt. Shutdowing...");
+    logger_->info("Got an interrupt. Preparing to shutdown...");
     thread_pool_.shutdown();
 }
 
