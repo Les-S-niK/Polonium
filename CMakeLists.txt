@@ -12,9 +12,9 @@ add_library(
   src/routing/dispatcher.cpp
   src/routing/uri_parser.cpp
   src/routing/uri_params.cpp
+  src/routing/polonium_router.cpp
   # SOCKETS ##
   src/sockets/connection_handler.cpp
-  # src/sockets/polonium_router.cpp
   src/sockets/tcp_socket.cpp
   # OTHER MAIN PARTS ##
   src/polonium.cpp

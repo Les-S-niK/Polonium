@@ -6,6 +6,9 @@
 
 #include "polonium/routing/uri_params.hpp"
 
+UriParser::UriParser(std::string_view uri, std::string_view uri_template)
+    : uri_(uri), uri_template_(uri_template) {}
+
 auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
     -> std::unordered_map<std::string, UriParamValue> {
     if (params_template.empty()) {
@@ -46,6 +49,9 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
     }
     return parsed_values;
 }
+
+UriTemplateParser::UriTemplateParser(std::string_view uri_template)
+    : uri_template_(uri_template) {}
 
 auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
     // {unsigned section: UtiParamTemplate(string type, string name)}
@@ -168,4 +174,19 @@ auto UriParser::splitUri(std::string_view uri, char separator)
         }
     }
     return splitted_uri;
+}
+
+[[nodiscard]]
+auto UriParser::tryConvertToInt(const std::string& value) -> bool {
+    size_t pos{};
+
+    try {
+        std::stoi(value, &pos);
+    } catch (const std::invalid_argument&) {
+        return false;
+    } catch (const std::out_of_range&) {
+        return false;
+    }
+
+    return value.size() == pos;
 }

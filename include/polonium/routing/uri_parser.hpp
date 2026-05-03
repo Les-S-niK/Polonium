@@ -19,8 +19,7 @@ using parsed_templates = std::unordered_map<unsigned, UriParamTemplate>;
 
 class UriParser {
    public:
-    UriParser(std::string_view uri, std::string_view uri_template)
-        : uri_(uri), uri_template_(uri_template) {}
+    UriParser(std::string_view uri, std::string_view uri_template);
     UriParser(const UriParser&) noexcept = default;
     UriParser(const UriParser&&) noexcept = delete;
     auto operator=(const UriParser&) noexcept -> UriParser& = default;
@@ -50,19 +49,7 @@ class UriParser {
 
    private:
     [[nodiscard]]
-    static auto tryConvertToInt(const std::string& value) -> bool {
-        size_t pos{};
-
-        try {
-            std::stoi(value, &pos);
-        } catch (const std::invalid_argument&) {
-            return false;
-        } catch (const std::out_of_range&) {
-            return false;
-        }
-
-        return value.size() == pos;
-    }
+    static auto tryConvertToInt(const std::string& value) -> bool;
 
     std::string_view uri_;
     std::string_view uri_template_;
@@ -70,8 +57,7 @@ class UriParser {
 
 class UriTemplateParser {
    public:
-    explicit UriTemplateParser(std::string_view uri_template)
-        : uri_template_(uri_template) {}
+    explicit UriTemplateParser(std::string_view uri_template);
     UriTemplateParser(const UriTemplateParser&) noexcept = default;
     UriTemplateParser(const UriTemplateParser&&) noexcept = delete;
     auto operator=(const UriTemplateParser&) noexcept
