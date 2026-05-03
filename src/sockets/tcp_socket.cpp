@@ -1,5 +1,9 @@
 #include "polonium/sockets/tcp_socket.hpp"
 
+#include <asm-generic/socket.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <array>
 #include <format>
 #include <iterator>
@@ -21,7 +25,8 @@ TcpIpv4Socket::TcpIpv4Socket()
 
 TcpIpv4Socket::~TcpIpv4Socket() {
     logger_->trace(__func__);
-    if (server_fd_ != 0) {
+    if (server_fd_ != -1) {
+        shutdown(server_fd_, SHUT_RDWR);
         close(server_fd_);
     }
     logger_->debug("Closed TCP/IPv4 socket.");
@@ -41,6 +46,15 @@ auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port)
     server_addr.sin_family = AF_INET;
     logger_->debug(std::format(
         "Try binding TCP/IPv4 socket.\nHost: {}\nPort: {}", host, port));
+
+    constexpr int enable = 1;
+    if (setsockopt(server_fd_, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) <
+            0 or
+        setsockopt(server_fd_, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) <
+            0) {
+        logAndThrowException_(
+            "Can not set socket option to reuse ADDR or PORT.");
+    }
 
     if (bind(server_fd_, reinterpret_cast<struct sockaddr*>(&server_addr),
              sizeof(server_addr)) == -1) {

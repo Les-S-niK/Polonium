@@ -1,31 +1,78 @@
 
 #include "polonium/sockets/connection_handler.hpp"
 
+#include <asm-generic/socket.h>
+#include <sys/socket.h>
+
+#include <atomic>
+#include <csignal>
 #include <functional>
 #include <memory>
 
 #include "polonium/http/http.hpp"
 #include "polonium/http/request_parser.hpp"
 #include "polonium/http/response_serializer.hpp"
+#include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/socket_config.hpp"
 #include "polonium/sockets/socket_exceptions.hpp"
 #include "polonium/thread_pool.hpp"
 
-// TODO: Implement IPv6 support in future.
+namespace {
+std::atomic<bool> keep_running{true};
+auto sigintHandler([[maybe_unused]] int /* unused */) {
+    keep_running.store(false, std::memory_order_relaxed);
+}
+}  // namespace
 
-void ConnectionHandler::acceptConnection() {
-    // TODO: Make reasonable condition in future.
-    while (true) {
-        std::pair<socket_fd, struct sockaddr_in> accepted_pair =
-            ipv4_socket_.tcpAccept();
-        thread_pool_.addTask([this, accepted_pair]() -> void {
-            handleConnection(accepted_pair.first);
-        });
+// TODO: lessnik - Implement IPv6 support in future.
+ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
+                                     Dispatcher& dispatcher,
+                                     uint32_t workers_amount)
+    : port_(port),
+      host_(std::move(host)),
+      thread_pool_(workers_amount),
+      dispatcher_(dispatcher),
+      logger_(PoloniumLogger::getInstance()) {
+    logger_->trace(__func__);
+    logger_->info("Connection Handler initialization.");
+    auto result = std::signal(SIGINT, sigintHandler);
+    if (result == SIG_ERR) {
+        logger_->error("Could not assign sigintHandler");
     }
+    server_fd_ = ipv4_socket_.getServerSocketFd();
+    ipv4_socket_.tcpBind(host_, port_);
+    ipv4_socket_.tcpListen(socket_options::max_backlog_size);
 }
 
-void ConnectionHandler::handleConnection(socket_fd client_fd) {
+auto ConnectionHandler::acceptConnection() -> void {
+    while (keep_running.load(std::memory_order_relaxed)) {
+        std::pair<socket_fd, struct sockaddr_in> accepted_pair{};
+        try {
+            accepted_pair = ipv4_socket_.tcpAccept();
+        } catch (const socket_exception&) {
+            logger_->warning("Error ignored in tcpAccept.");
+            continue;
+        }
+        socket_fd client_fd = accepted_pair.first;
+        struct timeval time_value = {.tv_sec = socket_options::timeout_seconds,
+                                     .tv_usec = 0};
+
+        if (setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &time_value,
+                       sizeof(time_value)) < 0 or
+            (setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, &time_value,
+                        sizeof(time_value)) < 0)) {
+            logger_->error("Can not set send or recv timeout seconds.");
+        }
+
+        thread_pool_.addTask(
+            [this, client_fd]() -> void { handleConnection(client_fd); });
+    }
+    logger_->info("Got an interrupt. Shutdowing...");
+    thread_pool_.shutdown();
+}
+
+auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
     HttpRequestParser request_parser;
 
     while (true) {

@@ -1,13 +1,5 @@
 #pragma once
 
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cstdint>
-#include <string>
-#include <utility>
-
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/socket_config.hpp"
@@ -18,21 +10,15 @@
 
 class ConnectionHandler {
    public:
+    ConnectionHandler(const ConnectionHandler&) = delete;
+    ConnectionHandler(ConnectionHandler&&) = delete;
+    auto operator=(const ConnectionHandler&) -> ConnectionHandler& = delete;
+    auto operator=(ConnectionHandler&&) -> ConnectionHandler& = delete;
     ConnectionHandler(std::string host, uint16_t port, Dispatcher& dispatcher,
-                      uint32_t workers_amount)
-        : port_(port),
-          host_(std::move(host)),
-          thread_pool_(workers_amount),
-          dispatcher_(dispatcher),
-          logger_(PoloniumLogger::getInstance()) {
-        logger_->trace(__func__);
-        logger_->info("Connection Handler initialization.");
-        server_fd_ = ipv4_socket_.getServerSocketFd();
-        ipv4_socket_.tcpBind(host_, port_);
-        ipv4_socket_.tcpListen(socket_options::max_backlog_size);
-    }
+                      uint32_t workers_amount);
+    ~ConnectionHandler() = default;
 
-    void acceptConnection();
+    auto acceptConnection() -> void;
 
    private:
     socket_fd server_fd_;
@@ -43,5 +29,5 @@ class ConnectionHandler {
     Dispatcher& dispatcher_;
     PoloniumLogger* logger_;
 
-    void handleConnection(socket_fd client_fd);
+    auto handleConnection(socket_fd client_fd) -> void;
 };
