@@ -4,12 +4,17 @@
 #include <utility>
 
 #include "polonium/polonium_logger.hpp"
+#include "polonium/routing/uri_parser.hpp"
 
 Route::Route(std::string method, std::string uri, endpoint_handler handler)
     : method(std::move(method)),
       uri(std::move(uri)),
       handler(std::move(handler)) {
-    templates = UriTemplateParser(this->uri).getUriParamsTemplate();
+    auto uri_params_template =
+        UriTemplateParser(this->uri).getUriParamsTemplate();
+    if (uri_params_template.has_value()) {
+        templates = uri_params_template.value();
+    }
 }
 
 PoloniumRouter::PoloniumRouter(std::string default_uri)

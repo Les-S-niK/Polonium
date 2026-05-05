@@ -2,6 +2,8 @@
 #include "polonium/routing/uri_parser.hpp"
 
 #include <algorithm>
+#include <expected>
+#include <optional>
 #include <sstream>
 
 #include "polonium/routing/uri_params.hpp"
@@ -53,13 +55,14 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
 UriTemplateParser::UriTemplateParser(std::string_view uri_template)
     : uri_template_(uri_template) {}
 
-auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
+auto UriTemplateParser::getUriParamsTemplate() const
+    -> std::expected<parsed_templates, ParserErrors> {
     // {unsigned section: UtiParamTemplate(string type, string name)}
     parsed_templates path_params;
     std::vector<std::string> splitted_uri = UriParser::splitUri(uri_template_);
-    // TODO: lessnik - Make better exception throwing.
+
     if (!validateUriSyntax()) {
-        throw std::runtime_error("Incorrect URI template!");
+        return std::unexpected(ParserErrors::IncorrectUriTemplate);
     }
 
     for (size_t section = 0; section < splitted_uri.size(); section++) {
@@ -67,9 +70,9 @@ auto UriTemplateParser::getUriParamsTemplate() const -> parsed_templates {
 
         if (current_str.front() == '{') {
             auto optional_type_and_name = parseUriTemplate(current_str);
-            // TODO: lessnik - Make better exception throwing.
+
             if (!optional_type_and_name) {
-                throw std::runtime_error("Incorrect URI template!");
+                return std::unexpected(ParserErrors::IncorrectUriTemplate);
             }
             path_params.emplace(
                 section, UriParamTemplate(optional_type_and_name->first,
@@ -132,6 +135,8 @@ auto UriTemplateParser::validateUriSyntax() const noexcept -> bool {
                     return false;
                 }
                 break;
+            default:
+                continue;
         }
     }
     return brace_amount == 0;
@@ -151,9 +156,8 @@ auto UriTemplateParser::parseUriTemplate(std::string_view uri_param_template)
     }
 
     const auto* found_type = std::ranges::find(allowed_types, type.value());
-    // TODO: lessnik - Make better exception throwing.
     if (found_type == std::end(allowed_types)) {
-        throw std::runtime_error("Incorrect template param type!");
+        return std::nullopt;
     }
     return std::make_pair(type.value(), name.value());
 }
@@ -176,7 +180,6 @@ auto UriParser::splitUri(std::string_view uri, char separator)
     return splitted_uri;
 }
 
-[[nodiscard]]
 auto UriParser::tryConvertToInt(const std::string& value) -> bool {
     size_t pos{};
 
