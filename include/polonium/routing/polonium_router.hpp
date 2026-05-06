@@ -2,7 +2,6 @@
 #pragma once
 
 #include <string_view>
-#include <utility>
 
 #include "polonium/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"

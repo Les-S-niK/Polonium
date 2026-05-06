@@ -1,6 +1,8 @@
 
 #include "polonium/polonium_logger.hpp"
 
+#include <array>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <print>
@@ -107,7 +109,6 @@ auto PoloniumLogger::newMessage(std::string_view message,
 
 auto PoloniumLogger::getCurrentTime(std::string_view format) -> std::string {
     constexpr const char* default_time = "00-00-00__00-00-0000";
-    constexpr size_t buffer_size = 64;
 
     std::time_t timestamp = std::time(nullptr);
     if (timestamp == -1) {
@@ -119,15 +120,15 @@ auto PoloniumLogger::getCurrentTime(std::string_view format) -> std::string {
         return default_time;
     }
 
-    std::string buffer;
-    buffer.resize(buffer_size);
+    constexpr size_t buffer_size = 64;
+    std::array<char, buffer_size> buffer{};
 
     size_t result_size =
         std::strftime(buffer.data(), buffer_size, format.data(), &datetime);
     if (result_size == 0) {
         return default_time;
     }
-    buffer.resize(result_size);
 
-    return buffer;
+    return {buffer.begin(),
+            std::next(buffer.begin(), static_cast<int64_t>(result_size))};
 }

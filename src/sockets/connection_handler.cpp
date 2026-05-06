@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <csignal>
+#include <expected>
 #include <functional>
 #include <memory>
 
@@ -16,7 +17,7 @@
 #include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/socket_config.hpp"
-#include "polonium/sockets/socket_exceptions.hpp"
+#include "polonium/sockets/tcp_socket.hpp"
 #include "polonium/thread_pool.hpp"
 
 namespace {
@@ -29,7 +30,7 @@ auto sigintHandler([[maybe_unused]] int /* unused */) {
 // TODO: lessnik - Implement IPv6 support in future.
 ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
                                      Dispatcher& dispatcher,
-                                     uint32_t workers_amount)
+                                     uint32_t workers_amount) noexcept
     : port_(port),
       host_(std::move(host)),
       thread_pool_(workers_amount),
@@ -45,19 +46,25 @@ ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
     sigaction(SIGINT, &signal_action, nullptr);
 
     server_fd_ = ipv4_socket_.getServerSocketFd();
-    ipv4_socket_.tcpBind(host_, port_);
-    ipv4_socket_.tcpListen(socket_options::max_backlog_size);
+    auto bind_result =
+        ipv4_socket_.tcpBind(host_, port_)
+            .and_then(
+                [this] -> std::expected<void, TcpIpv4Socket::TcpSocketErrors> {
+                    return ipv4_socket_.tcpListen(
+                        socket_options::max_backlog_size);
+                });
+    if (not bind_result.has_value()) {
+        keep_running.store(false, std::memory_order_relaxed);
+    }
 }
 
 auto ConnectionHandler::acceptConnection() -> void {
     while (keep_running.load(std::memory_order_relaxed)) {
-        std::pair<socket_fd, struct sockaddr_in> accepted_pair{};
-        try {
-            accepted_pair = ipv4_socket_.tcpAccept();
-        } catch (const socket_exception&) {
+        auto accepted_pair = ipv4_socket_.tcpAccept();
+        if (not accepted_pair.has_value()) {
             continue;
         }
-        socket_fd client_fd = accepted_pair.first;
+        socket_fd client_fd = accepted_pair.value().first;
         struct timeval time_value = {.tv_sec = socket_options::timeout_seconds,
                                      .tv_usec = 0};
 
@@ -79,21 +86,18 @@ auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
     HttpRequestParser request_parser;
 
     while (true) {
-        std::string buffer;
-        buffer.resize(socket_options::max_buffer_size);
-
-        try {
-            buffer = ipv4_socket_.tcpRecv(client_fd);
-        } catch (socket_exception& exception) {
+        auto buffer = ipv4_socket_.tcpRecv(client_fd);
+        if (not buffer.has_value()) {
             close(client_fd);
             return;
         }
-        if (buffer.empty()) {
+        if (buffer.value().empty()) {
             close(client_fd);
             return;
         }
 
-        HttpRequestParserStatus parser_status = request_parser.feed(buffer);
+        HttpRequestParserStatus parser_status =
+            request_parser.feed(buffer.value());
 
         if (parser_status == HttpRequestParserStatus::Complete) {
             HttpRequest request = request_parser.getRequest();
@@ -149,9 +153,9 @@ auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
                 response_buffer.assign(response.begin(), response.end());
             }
             logger_->debug("Send the response to the client.");
-            try {
-                ipv4_socket_.tcpSend(client_fd, response_buffer);
-            } catch (socket_exception&) {
+
+            auto send_result = ipv4_socket_.tcpSend(client_fd, response_buffer);
+            if (not send_result.has_value()) {
                 close(client_fd);
             }
 

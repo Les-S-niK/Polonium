@@ -10,12 +10,12 @@
 
 class ConnectionHandler {
    public:
+    ConnectionHandler(std::string host, uint16_t port, Dispatcher& dispatcher,
+                      uint32_t workers_amount) noexcept;
     ConnectionHandler(const ConnectionHandler&) = delete;
     ConnectionHandler(ConnectionHandler&&) = delete;
     auto operator=(const ConnectionHandler&) -> ConnectionHandler& = delete;
     auto operator=(ConnectionHandler&&) -> ConnectionHandler& = delete;
-    ConnectionHandler(std::string host, uint16_t port, Dispatcher& dispatcher,
-                      uint32_t workers_amount);
     ~ConnectionHandler() = default;
 
     auto acceptConnection() -> void;

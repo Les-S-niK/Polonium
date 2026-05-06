@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cstdint>
+#include <expected>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -57,6 +59,10 @@ class UriParser {
 
 class UriTemplateParser {
    public:
+    enum class ParserErrors : uint8_t {
+        IncorrectUriTemplate,
+        IncorrectTemplateParamType
+    };
     explicit UriTemplateParser(std::string_view uri_template);
     UriTemplateParser(const UriTemplateParser&) noexcept = default;
     UriTemplateParser(const UriTemplateParser&&) noexcept = delete;
@@ -64,9 +70,10 @@ class UriTemplateParser {
         -> UriTemplateParser& = default;
     auto operator=(const UriTemplateParser&&) noexcept
         -> UriTemplateParser& = delete;
-    ~UriTemplateParser() = default;
+    ~UriTemplateParser() noexcept = default;
 
-    [[nodiscard]] auto getUriParamsTemplate() const -> parsed_templates;
+    [[nodiscard]] auto getUriParamsTemplate() const
+        -> std::expected<parsed_templates, ParserErrors>;
 
    private:
     static constexpr auto pattern =
