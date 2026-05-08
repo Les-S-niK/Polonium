@@ -19,12 +19,12 @@ auto ApiResponse::getHeaders() const noexcept
 }
 auto ApiResponse::appendHeaders(std::pair<std::string, std::string>&& to_append)
     -> void {
-    headers_.insert(to_append);
+    headers_.insert(std::move(to_append));
 }
 auto ApiResponse::appendHeaders(
     std::unordered_map<std::string, std::string>&& to_append) -> void {
-    for (const auto& header : to_append) {
-        headers_.insert(header);
+    for (auto&& header : std::move(to_append)) {
+        headers_.insert(std::move(header));
     }
 }
 auto ApiResponse::appendHeaders(std::string&& key, std::string&& value)

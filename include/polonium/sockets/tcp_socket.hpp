@@ -20,14 +20,15 @@
 #include <string_view>
 #include <utility>
 
-#include "polonium/polonium_logger.hpp"
-#include "polonium/sockets/socket_config.hpp"
+#include "polonium/app/polonium_logger.hpp"
+
+using socket_fd = int;
 
 template <typename Method>
-concept is_polonium_logger_method =
-    requires(PoloniumLogger logger, Method method, std::string_view message) {
-        { (logger.*method)(message) } -> std::same_as<void>;
-    };
+concept is_polonium_logger_method = requires(
+    polonium::PoloniumLogger logger, Method method, std::string_view message) {
+    { (logger.*method)(message) } -> std::same_as<void>;
+};
 
 namespace exception_messages {
 inline constexpr const char* tcp_socket =
@@ -167,5 +168,5 @@ class TcpIpv4Socket {
     }
 
     socket_fd server_fd_;
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
 };

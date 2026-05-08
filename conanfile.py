@@ -2,9 +2,9 @@ from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 
-class poloniumRecipe(ConanFile):
+class PoloniumRecipe(ConanFile):
     name = "polonium"
-    version = "0.9.2"
+    version = "0.10.0"
     package_type = "library"
 
     # Optional metadata

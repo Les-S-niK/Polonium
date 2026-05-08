@@ -5,8 +5,8 @@
 
 #include <format>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 
 HttpRequestParser::~HttpRequestParser() {
     logger_->trace(__func__);
@@ -111,7 +111,7 @@ auto HttpRequestParser::handlerOnMessageComplete(llhttp_t* parser) -> int {
 }
 
 HttpRequestParser::HttpRequestParser()
-    : logger_(PoloniumLogger::getInstance()) {
+    : logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->debug("Llhttp Parser initialization.");
     request_ = HttpRequest();

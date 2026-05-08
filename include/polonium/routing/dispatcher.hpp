@@ -10,8 +10,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 #include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
@@ -57,6 +57,6 @@ class Dispatcher {
         -> HandlerWithParams<endpoint_handler>;
 
    private:
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
     routes_table routes_;
 };

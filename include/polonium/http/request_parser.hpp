@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <string>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 
 enum class HttpRequestParserStatus : uint8_t {
     Complete = 0,
@@ -44,7 +44,7 @@ class HttpRequestParser {
     bool is_complete_ = false;
     bool is_keep_alive_ = false;
     size_t parsed_bytes_ = 0;
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
     /**
      * @brief Temporary pair represents <field: value> in the request headers.
      * The first element sets in the <handler_on_header_field>

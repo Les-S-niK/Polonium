@@ -3,7 +3,7 @@
 
 #include <utility>
 
-#include "polonium/polonium_logger.hpp"
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
 Route::Route(std::string method, std::string uri, endpoint_handler handler)
@@ -19,7 +19,7 @@ Route::Route(std::string method, std::string uri, endpoint_handler handler)
 
 PoloniumRouter::PoloniumRouter(std::string default_uri)
     : default_uri_(std::move(default_uri)),
-      logger_(PoloniumLogger::getInstance()) {}
+      logger_(polonium::PoloniumLogger::getInstance()) {}
 
 [[nodiscard]] auto PoloniumRouter::getDefaultUri() const noexcept
     -> std::string {
@@ -35,8 +35,7 @@ auto PoloniumRouter::setDefaultUri(std::string value) noexcept
     return *this;
 }
 
-auto PoloniumRouter::includeDispatcher(Dispatcher& dispatcher) noexcept
-    -> void {
+auto PoloniumRouter::includeDispatcher(Dispatcher& dispatcher) -> void {
     logger_->trace(__func__);
     for (auto& [method, uri, handler, templates] : routes_) {
         dispatcher.registerMethod(std::move(method), std::move(uri), handler,

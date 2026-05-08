@@ -14,11 +14,11 @@
 #include <system_error>
 #include <utility>
 
-#include "polonium/polonium_logger.hpp"
-#include "polonium/sockets/socket_config.hpp"
+#include "polonium/app/polonium_config.hpp"
+#include "polonium/app/polonium_logger.hpp"
 
 TcpIpv4Socket::TcpIpv4Socket(socket_fd server_fd)
-    : server_fd_{server_fd}, logger_(PoloniumLogger::getInstance()) {
+    : server_fd_{server_fd}, logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->info("TCP/IPv4 socket initialization.");
 }
@@ -49,9 +49,9 @@ TcpIpv4Socket::~TcpIpv4Socket() {
 
 [[nodiscard]] auto TcpIpv4Socket::createTcpIpv4Socket() noexcept
     -> std::expected<TcpIpv4Socket, TcpSocketErrors> {
-    PoloniumLogger* logger = nullptr;
+    polonium::PoloniumLogger* logger = nullptr;
     try {
-        logger = PoloniumLogger::getInstance();
+        logger = polonium::PoloniumLogger::getInstance();
     } catch (const std::runtime_error&) {
         return std::unexpected(TcpSocketErrors::TcpSocketInitError);
     }
@@ -89,13 +89,13 @@ auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port) const
         setsockopt(server_fd_, SOL_SOCKET, SO_REUSEPORT, &enable, sizeof(int)) <
             0) {
         logSocketError_(exception_messages::tcp_bind_sockopt_error,
-                        &PoloniumLogger::warning);
+                        &polonium::PoloniumLogger::warning);
     }
 
     if (bind(server_fd_, reinterpret_cast<struct sockaddr*>(&server_addr),
              sizeof(server_addr)) == -1) {
         logSocketError_(exception_messages::tcp_bind,
-                        &PoloniumLogger::critical);
+                        &polonium::PoloniumLogger::critical);
         return std::unexpected(TcpSocketErrors::TcpSocketBindError);
     }
     logger_->debug("TCP/IPv4 socket binded.");
@@ -107,7 +107,7 @@ auto TcpIpv4Socket::tcpListen(const int& max_backlog_size) const
     logger_->trace(__func__);
     if (listen(server_fd_, max_backlog_size) == -1) {
         logSocketError_(exception_messages::tcp_listen,
-                        &PoloniumLogger::critical);
+                        &polonium::PoloniumLogger::critical);
         return std::unexpected(TcpSocketErrors::TcpSocketListenErorr);
     }
     logger_->debug(std::format("Listen. Max backlog size: {} connections",
@@ -130,11 +130,12 @@ auto TcpIpv4Socket::tcpAccept() const
                 std::error_code(errno, std::generic_category()).value();
             errno_core == EINTR) {
             logSocketError_(exception_messages::tcp_accept_interrupted,
-                            &PoloniumLogger::warning);
+                            &polonium::PoloniumLogger::warning);
             return std::unexpected(
                 TcpSocketErrors::TcpSocketAcceptInterruptError);
         }
-        logSocketError_(exception_messages::tcp_accept, &PoloniumLogger::error);
+        logSocketError_(exception_messages::tcp_accept,
+                        &polonium::PoloniumLogger::error);
         return std::unexpected(TcpSocketErrors::TcpSocketAcceptInvalidFdError);
     }
     std::array<char, praddr4_len> protoaddr{};
@@ -151,7 +152,8 @@ auto TcpIpv4Socket::tcpAccept() const
 auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags) const
     -> std::expected<std::string, TcpSocketErrors> {
     logger_->trace(__func__);
-    std::array<char, socket_options::max_buffer_size> buffer{};
+    constexpr uint16_t max_buffer_size = 8192;
+    std::array<char, max_buffer_size> buffer{};
 
     ssize_t recieved_size =
         recv(client_fd, buffer.data(), buffer.size(), flags);
@@ -161,10 +163,11 @@ auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags) const
                 std::error_code(errno, std::generic_category()).value();
             errno_code == EAGAIN or errno_code == EWOULDBLOCK) {
             logSocketError_(exception_messages::tcp_recv_timeout,
-                            &PoloniumLogger::debug);
+                            &polonium::PoloniumLogger::debug);
             return std::unexpected(TcpSocketErrors::TcpSocketRecvTimeoutError);
         }
-        logSocketError_(exception_messages::tcp_recv, &PoloniumLogger::error);
+        logSocketError_(exception_messages::tcp_recv,
+                        &polonium::PoloniumLogger::error);
         return std::unexpected(TcpSocketErrors::TcpSocketRecvInvalidSizeError);
     }
     if (recieved_size == 0) {
@@ -183,7 +186,8 @@ auto TcpIpv4Socket::tcpSend(const socket_fd& client_fd, std::string_view buffer,
     ssize_t sent_size = send(client_fd, buffer.data(), buffer.size(), flags);
 
     if (sent_size == -1) {
-        logSocketError_(exception_messages::tcp_send, &PoloniumLogger::error);
+        logSocketError_(exception_messages::tcp_send,
+                        &polonium::PoloniumLogger::error);
         return std::unexpected(TcpSocketErrors::TcpSocketSendError);
     }
     logger_->debug(std::format("Sent buffer with the size: {}", buffer.size()));

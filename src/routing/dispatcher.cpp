@@ -7,7 +7,7 @@
 
 #include "polonium/routing/uri_parser.hpp"
 
-Dispatcher::Dispatcher() : logger_(PoloniumLogger::getInstance()) {
+Dispatcher::Dispatcher() : logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
 }
 Dispatcher::~Dispatcher() { logger_->trace(__func__); }

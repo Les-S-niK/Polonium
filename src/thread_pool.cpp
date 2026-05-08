@@ -8,7 +8,7 @@
 #include <thread>
 #include <utility>
 
-#include "polonium/polonium_logger.hpp"
+#include "polonium/app/polonium_logger.hpp"
 
 ThreadPool::ThreadPool(uint32_t workers_amount) {
     logger_->trace(__func__);

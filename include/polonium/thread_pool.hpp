@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "polonium/polonium_logger.hpp"
+#include "polonium/app/polonium_logger.hpp"
 
 template <typename F>
 concept is_callable = requires(F func) { func(); };
@@ -116,7 +116,7 @@ class ThreadPool {
     std::mutex mutex_;
     ThreadSafeDeque<std::move_only_function<void(void)>> tasks_;
     std::stop_source ssource_{};
-    PoloniumLogger* logger_ = PoloniumLogger::getInstance();
+    polonium::PoloniumLogger* logger_ = polonium::PoloniumLogger::getInstance();
     std::vector<std::jthread> workers_;
 
     /**
