@@ -6,9 +6,11 @@
 
 #include <atomic>
 #include <csignal>
+#include <exception>
 #include <expected>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 
 #include "polonium/http/http.hpp"
 #include "polonium/http/request_parser.hpp"
@@ -30,8 +32,9 @@ auto sigintHandler([[maybe_unused]] int /* unused */) {
 // TODO: lessnik - Implement IPv6 support in future.
 ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
                                      Dispatcher& dispatcher,
-                                     uint32_t workers_amount) noexcept
-    : port_(port),
+                                     uint32_t workers_amount)
+    : ipv4_socket_(TcpIpv4Socket::createTcpIpv4Socket()),
+      port_(port),
       host_(std::move(host)),
       thread_pool_(workers_amount),
       dispatcher_(dispatcher),
@@ -39,28 +42,33 @@ ConnectionHandler::ConnectionHandler(std::string host, uint16_t port,
     logger_->trace(__func__);
     logger_->info("Connection Handler initialization.");
 
+    if (not ipv4_socket_.has_value()) {
+        throw std::runtime_error(std::format(
+            "{} says: Can not initialize TcpIpv4Socket object.", __func__));
+    }
+    server_fd_ = ipv4_socket_.value().getServerSocketFd();
+
     struct sigaction signal_action{};
     signal_action.sa_handler = sigintHandler;
     signal_action.sa_flags = 0;
     sigemptyset(&signal_action.sa_mask);
     sigaction(SIGINT, &signal_action, nullptr);
 
-    server_fd_ = ipv4_socket_.getServerSocketFd();
     auto bind_result =
-        ipv4_socket_.tcpBind(host_, port_)
+        ipv4_socket_.value()
+            .tcpBind(host_, port_)
             .and_then(
                 [this] -> std::expected<void, TcpIpv4Socket::TcpSocketErrors> {
-                    return ipv4_socket_.tcpListen(
+                    return ipv4_socket_.value().tcpListen(
                         socket_options::max_backlog_size);
                 });
     if (not bind_result.has_value()) {
         keep_running.store(false, std::memory_order_relaxed);
     }
 }
-
 auto ConnectionHandler::acceptConnection() -> void {
     while (keep_running.load(std::memory_order_relaxed)) {
-        auto accepted_pair = ipv4_socket_.tcpAccept();
+        auto accepted_pair = ipv4_socket_.value().tcpAccept();
         if (not accepted_pair.has_value()) {
             continue;
         }
@@ -86,7 +94,7 @@ auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
     HttpRequestParser request_parser;
 
     while (true) {
-        auto buffer = ipv4_socket_.tcpRecv(client_fd);
+        auto buffer = ipv4_socket_.value().tcpRecv(client_fd);
         if (not buffer.has_value()) {
             close(client_fd);
             return;
@@ -116,10 +124,10 @@ auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
                 response_buffer.resize(response.size());
                 response_buffer.assign(response.begin(), response.end());
             } else {
-                /* Accepted connection to the existing endpoint. Execute user's
-                 * function and serialize a response. Function returns
-                 * ApiResponse subclass object. Move headers and body from the
-                 * object.
+                /* Accepted connection to the existing endpoint. Execute
+                 * user's function and serialize a response. Function
+                 * returns ApiResponse subclass object. Move headers and
+                 * body from the object.
                  */
                 logger_->info("Accepted connection to the existing endpoint.");
                 if (!handler_with_params.path_params.empty()) {
@@ -154,7 +162,8 @@ auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
             }
             logger_->debug("Send the response to the client.");
 
-            auto send_result = ipv4_socket_.tcpSend(client_fd, response_buffer);
+            auto send_result =
+                ipv4_socket_.value().tcpSend(client_fd, response_buffer);
             if (not send_result.has_value()) {
                 close(client_fd);
             }

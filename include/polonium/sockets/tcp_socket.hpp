@@ -67,18 +67,22 @@ class TcpIpv4Socket {
         TcpSocketSendError,
     };
 
+    TcpIpv4Socket() = delete;
+    TcpIpv4Socket(const TcpIpv4Socket&) = delete;
+    TcpIpv4Socket(TcpIpv4Socket&& other) noexcept;
+    auto operator=(const TcpIpv4Socket&) -> TcpIpv4Socket& = delete;
+    auto operator=(TcpIpv4Socket&& other) noexcept -> TcpIpv4Socket&;
+    ~TcpIpv4Socket();
+
     /**
-     * @brief TcpIpv4Socket constructor. Initializes socket_fd_ by a socket()
+     * @brief TcpIpv4Socket fabric method. Initializes socket_fd_ by a socket()
      * system call.
      *
-     * @throw std::runtime_error in case when socket() system call returned -1.
+     * @return TcpIpv4Socket& instance if socket_fd_ initialized successfully.
+     * TcpSocketInitError otherwise.
      */
-    TcpIpv4Socket();
-    TcpIpv4Socket(const TcpIpv4Socket&) = default;
-    TcpIpv4Socket(TcpIpv4Socket&&) = delete;
-    auto operator=(const TcpIpv4Socket&) -> TcpIpv4Socket& = delete;
-    auto operator=(TcpIpv4Socket&&) -> TcpIpv4Socket& = delete;
-    ~TcpIpv4Socket();
+    [[nodiscard]] static auto createTcpIpv4Socket() noexcept
+        -> std::expected<TcpIpv4Socket, TcpSocketErrors>;
 
     /**
      * @brief Get server socket file descriptor.
@@ -93,7 +97,8 @@ class TcpIpv4Socket {
      * @param host: server host.
      * @param port: server port to open.
      *
-     * @return void if socket was binded sucessfully. TcpSocketErrors otherwise.
+     * @return void if socket was binded successfully. TcpSocketErrors
+     * otherwise.
      */
     [[nodiscard]] auto tcpBind(const std::string& host,
                                const uint16_t& port) const
@@ -111,7 +116,7 @@ class TcpIpv4Socket {
      * @brief Accept a new client connection.
      *
      * @return std::pair<socket_fd, struct sockaddr_in>: client fd with his
-     * sockaddr_in when accepted connection sucessfully. TcpSocketErrors
+     * sockaddr_in when accepted connection successfully. TcpSocketErrors
      * otherwise.
      */
     [[nodiscard]] auto tcpAccept() const
@@ -124,8 +129,8 @@ class TcpIpv4Socket {
      * @param client_fd
      * @param flags
      *
-     * @return std::string: received data as string if receive data sucessfully.
-     * TcpSocketErrors otherwise.
+     * @return std::string: received data as string if receive data
+     * successfully. TcpSocketErrors otherwise.
      */
     [[nodiscard]] auto tcpRecv(const socket_fd& client_fd, int flags = 0) const
         -> std::expected<std::string, TcpSocketErrors>;
@@ -137,7 +142,7 @@ class TcpIpv4Socket {
      * @param buffer: string buffer to send.
      * @param flags
      *
-     * @return ssize_t: sended data length if data sended sucessfully.
+     * @return ssize_t: sent data length if data sent successfull.
      * TcpSocketErrors otherwise.
      */
     [[nodiscard]] auto tcpSend(const socket_fd& client_fd,
@@ -145,8 +150,10 @@ class TcpIpv4Socket {
         -> std::expected<ssize_t, TcpSocketErrors>;
 
    private:
+    explicit TcpIpv4Socket(socket_fd server_fd);
+
     /**
-     * @brief Write occured error in the log file.
+     * @brief Write occurred error in the log file.
      *
      * @param message: Message that will be written in the log file.
      */
@@ -159,6 +166,6 @@ class TcpIpv4Socket {
         (logger_->*method)(final_message);
     }
 
-    PoloniumLogger* logger_;
     socket_fd server_fd_;
+    PoloniumLogger* logger_;
 };
