@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+namespace polonium {
 namespace uri_param_types {
 inline constexpr std::string_view str_type = "str";
 inline constexpr std::string_view int_type = "int";
@@ -30,3 +31,4 @@ struct UriParamValue {
     std::string_view type;
     std::string value;
 };
+}  // namespace polonium

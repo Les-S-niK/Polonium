@@ -29,11 +29,11 @@ auto sigintHandler([[maybe_unused]] int /* unused */) {
 }  // namespace
 
 // TODO: lessnik - Implement IPv6 support in future.
-ConnectionHandler::ConnectionHandler(
+polonium::ConnectionHandler::ConnectionHandler(
     const polonium::PoloniumApiSettings& api_settings,
     const polonium::PoloinumSocketSettings& socket_settings,
     const polonium::PoloniumThreadPoolSettings& thread_pool_settings,
-    Dispatcher& dispatcher)
+    polonium::Dispatcher& dispatcher)
     : ipv4_socket_(TcpIpv4Socket::createTcpIpv4Socket()),
       api_settings_(api_settings),
       thread_pool_settings_(thread_pool_settings),
@@ -68,7 +68,7 @@ ConnectionHandler::ConnectionHandler(
         keep_running.store(false, std::memory_order_relaxed);
     }
 }
-auto ConnectionHandler::acceptConnection() -> void {
+auto polonium::ConnectionHandler::acceptConnection() -> void {
     while (keep_running.load(std::memory_order_relaxed)) {
         auto accepted_pair = ipv4_socket_.value().tcpAccept();
         if (not accepted_pair.has_value()) {
@@ -93,7 +93,8 @@ auto ConnectionHandler::acceptConnection() -> void {
     thread_pool_.shutdown();
 }
 
-auto ConnectionHandler::handleConnection(socket_fd client_fd) -> void {
+auto polonium::ConnectionHandler::handleConnection(socket_fd client_fd)
+    -> void {
     HttpRequestParser request_parser;
 
     while (true) {

@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 
+namespace polonium {
 using path = std::filesystem::path;
 
 namespace logger_colors {
@@ -35,7 +36,6 @@ inline constexpr std::string_view filename_format = "%H-%M-%S__%d-%b-%Y";
 inline constexpr std::string_view log_str_format = "%H:%M:%S-%d/%m/%Y";
 }  // namespace logger_date_formats
 
-namespace polonium {
 enum class LoggerLevels : uint8_t {
     Trace = 0,
     Debug = 1,

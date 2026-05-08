@@ -17,6 +17,7 @@
 
 #include "polonium/app/polonium_logger.hpp"
 
+namespace polonium {
 template <typename F>
 concept is_callable = requires(F func) { func(); };
 
@@ -126,3 +127,4 @@ class ThreadPool {
      */
     auto worker_loop(const std::stop_token& stoken) -> void;
 };
+}  // namespace polonium

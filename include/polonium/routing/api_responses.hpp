@@ -13,6 +13,7 @@
 #include "polonium/http/http.hpp"
 #include "polonium/json_parser.hpp"
 
+namespace polonium {
 /**
  * @class ApiResponse
  * @brief Base API response abstract data type. Any other class that represents
@@ -77,3 +78,4 @@ class JsonResponse final : public ApiResponseWithContent {
    private:
     json content_;
 };
+}  // namespace polonium

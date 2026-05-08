@@ -1,7 +1,7 @@
 
 #include "polonium/http/response_serializer.hpp"
 
-[[nodiscard]] auto HttpResponseSerializer::serializeResponse() const
+[[nodiscard]] auto polonium::HttpResponseSerializer::serializeResponse() const
     -> std::string {
     logger_->trace(__func__);
     std::string response_buffer;
@@ -26,7 +26,8 @@
     return response_buffer;
 }
 
-[[nodiscard]] auto HttpResponseSerializer::getCurrentGmtTime() -> std::string {
+[[nodiscard]] auto polonium::HttpResponseSerializer::getCurrentGmtTime()
+    -> std::string {
     using std::chrono::system_clock;
     constexpr const char* gmt_time_format = "%a, %d %b %Y %H:%M:%S GMT";
 

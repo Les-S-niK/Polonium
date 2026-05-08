@@ -10,13 +10,14 @@
 
 // TODO: lessnik - Implement IPv6 support in future.
 
+namespace polonium {
 class ConnectionHandler {
    public:
     ConnectionHandler(
         const polonium::PoloniumApiSettings& api_settings,
         const polonium::PoloinumSocketSettings& socket_settings,
         const polonium::PoloniumThreadPoolSettings& thread_pool_settings,
-        Dispatcher& dispatcher);
+        polonium::Dispatcher& dispatcher);
     ConnectionHandler(const ConnectionHandler& other) noexcept = delete;
     ConnectionHandler(ConnectionHandler&& other) noexcept = delete;
     auto operator=(const ConnectionHandler& other) noexcept
@@ -39,3 +40,4 @@ class ConnectionHandler {
 
     auto handleConnection(socket_fd client_fd) -> void;
 };
+}  // namespace polonium

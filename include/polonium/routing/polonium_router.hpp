@@ -7,6 +7,7 @@
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
+namespace polonium {
 namespace http_methods {
 constexpr const char* get = "GET";
 constexpr const char* post = "POST";
@@ -56,3 +57,4 @@ class PoloniumRouter {
     auto newMethod(const char* method, const std::string& uri,
                    endpoint_handler handler) -> void;
 };
+}  // namespace polonium

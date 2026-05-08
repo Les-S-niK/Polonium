@@ -17,6 +17,7 @@ I don't want to make a header with interfaces for this third-party lib.
 
 #include "polonium/routing/uri_params.hpp"
 
+namespace polonium {
 using parsed_templates = std::unordered_map<unsigned, UriParamTemplate>;
 
 class UriParser {
@@ -101,3 +102,4 @@ class UriTemplateParser {
 
     std::string_view uri_template_;
 };
+}  // namespace polonium

@@ -7,14 +7,17 @@
 
 #include "polonium/routing/uri_parser.hpp"
 
-Dispatcher::Dispatcher() : logger_(polonium::PoloniumLogger::getInstance()) {
+polonium::Dispatcher::Dispatcher()
+    : logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
 }
-Dispatcher::~Dispatcher() { logger_->trace(__func__); }
+polonium::Dispatcher::~Dispatcher() { logger_->trace(__func__); }
 
-void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
-                                const endpoint_handler& handler,
-                                parsed_templates&& templates) {
+auto polonium::Dispatcher::registerMethod(std::string&& method,
+                                          std::string&& uri,
+                                          const endpoint_handler& handler,
+                                          parsed_templates&& templates)
+    -> void {
     logger_->trace(__func__);
 
     if (!routes_.contains(method)) {
@@ -30,7 +33,8 @@ void Dispatcher::registerMethod(std::string&& method, std::string&& uri,
                               std::move(method), std::move(uri)));
 }
 
-auto Dispatcher::checkRoute(const std::string& method, const std::string& uri)
+auto polonium::Dispatcher::checkRoute(const std::string& method,
+                                      const std::string& uri)
     -> HandlerWithParams<endpoint_handler> {
     logger_->trace(__func__);
     logger_->info(

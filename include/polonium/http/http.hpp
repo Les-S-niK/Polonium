@@ -6,7 +6,7 @@
 
 #include "polonium/json_parser.hpp"
 #include "polonium/routing/uri_params.hpp"
-
+namespace polonium {
 namespace http_headers {
 constexpr const char* cache_control = "Cache-Control";
 constexpr const char* connection = "Connection";
@@ -293,3 +293,4 @@ namespace response_templates {
 auto create404ErrorResponse() -> HttpResponse;
 auto get404ErrorResponse() -> HttpResponse;
 }  // namespace response_templates
+};  // namespace polonium

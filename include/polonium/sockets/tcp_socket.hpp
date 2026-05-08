@@ -22,6 +22,7 @@
 
 #include "polonium/app/polonium_logger.hpp"
 
+namespace polonium {
 using socket_fd = int;
 
 template <typename Method>
@@ -170,3 +171,4 @@ class TcpIpv4Socket {
     socket_fd server_fd_;
     polonium::PoloniumLogger* logger_;
 };
+}  // namespace polonium

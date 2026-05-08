@@ -17,16 +17,16 @@
 #include "polonium/app/polonium_config.hpp"
 #include "polonium/app/polonium_logger.hpp"
 
-TcpIpv4Socket::TcpIpv4Socket(socket_fd server_fd)
+polonium::TcpIpv4Socket::TcpIpv4Socket(socket_fd server_fd)
     : server_fd_{server_fd}, logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->info("TCP/IPv4 socket initialization.");
 }
 
-TcpIpv4Socket::TcpIpv4Socket(TcpIpv4Socket&& other) noexcept
+polonium::TcpIpv4Socket::TcpIpv4Socket(TcpIpv4Socket&& other) noexcept
     : server_fd_(std::exchange(other.server_fd_, -1)), logger_(other.logger_) {}
 
-auto TcpIpv4Socket::operator=(TcpIpv4Socket&& other) noexcept
+auto polonium::TcpIpv4Socket::operator=(TcpIpv4Socket&& other) noexcept
     -> TcpIpv4Socket& {
     if (this != &other) {
         if (server_fd_ != -1) {
@@ -38,7 +38,7 @@ auto TcpIpv4Socket::operator=(TcpIpv4Socket&& other) noexcept
     return *this;
 }
 
-TcpIpv4Socket::~TcpIpv4Socket() {
+polonium::TcpIpv4Socket::~TcpIpv4Socket() {
     logger_->trace(__func__);
     if (server_fd_ != -1) {
         shutdown(server_fd_, SHUT_RDWR);
@@ -47,7 +47,7 @@ TcpIpv4Socket::~TcpIpv4Socket() {
     logger_->debug("Closed TCP/IPv4 socket.");
 }
 
-[[nodiscard]] auto TcpIpv4Socket::createTcpIpv4Socket() noexcept
+[[nodiscard]] auto polonium::TcpIpv4Socket::createTcpIpv4Socket() noexcept
     -> std::expected<TcpIpv4Socket, TcpSocketErrors> {
     polonium::PoloniumLogger* logger = nullptr;
     try {
@@ -66,12 +66,13 @@ TcpIpv4Socket::~TcpIpv4Socket() {
     return tcp_socket;
 }
 
-auto TcpIpv4Socket::getServerSocketFd() const -> socket_fd {
+auto polonium::TcpIpv4Socket::getServerSocketFd() const -> socket_fd {
     logger_->trace(__func__);
     return server_fd_;
 }
 
-auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port) const
+auto polonium::TcpIpv4Socket::tcpBind(const std::string& host,
+                                      const uint16_t& port) const
     -> std::expected<void, TcpSocketErrors> {
     logger_->trace(__func__);
 
@@ -102,7 +103,7 @@ auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port) const
     return {};
 }
 
-auto TcpIpv4Socket::tcpListen(const int& max_backlog_size) const
+auto polonium::TcpIpv4Socket::tcpListen(const int& max_backlog_size) const
     -> std::expected<void, TcpSocketErrors> {
     logger_->trace(__func__);
     if (listen(server_fd_, max_backlog_size) == -1) {
@@ -115,7 +116,7 @@ auto TcpIpv4Socket::tcpListen(const int& max_backlog_size) const
     return {};
 }
 
-auto TcpIpv4Socket::tcpAccept() const
+auto polonium::TcpIpv4Socket::tcpAccept() const
     -> std::expected<std::pair<socket_fd, struct sockaddr_in>,
                      TcpSocketErrors> {
     logger_->trace(__func__);
@@ -149,7 +150,8 @@ auto TcpIpv4Socket::tcpAccept() const
     return std::make_pair(client_fd, client_addr);
 }
 
-auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags) const
+auto polonium::TcpIpv4Socket::tcpRecv(const socket_fd& client_fd,
+                                      const int flags) const
     -> std::expected<std::string, TcpSocketErrors> {
     logger_->trace(__func__);
     constexpr uint16_t max_buffer_size = 8192;
@@ -179,8 +181,9 @@ auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags) const
                        std::next(buffer.begin(), recieved_size)};
 }
 
-auto TcpIpv4Socket::tcpSend(const socket_fd& client_fd, std::string_view buffer,
-                            const int flags) const
+auto polonium::TcpIpv4Socket::tcpSend(const socket_fd& client_fd,
+                                      std::string_view buffer,
+                                      const int flags) const
     -> std::expected<ssize_t, TcpSocketErrors> {
     logger_->trace(__func__);
     ssize_t sent_size = send(client_fd, buffer.data(), buffer.size(), flags);

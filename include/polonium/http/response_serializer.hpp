@@ -6,6 +6,7 @@
 #include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
 
+namespace polonium {
 /**
  * @class HttpResponseSerializer
  * @brief Class uses to Serialize HttpResponse instances to string.
@@ -41,3 +42,4 @@ class HttpResponseSerializer {
     const HttpResponse& response_;
     std::string http_response_;
 };
+}  // namespace polonium

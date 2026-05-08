@@ -9,6 +9,7 @@
 #include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
 
+namespace polonium {
 enum class HttpRequestParserStatus : uint8_t {
     Complete = 0,
     NeedMore = 1,
@@ -91,3 +92,4 @@ class HttpRequestParser {
                               size_t length) -> int;
     static auto handlerOnMessageComplete(llhttp_t* parser) -> int;
 };
+}  // namespace polonium
