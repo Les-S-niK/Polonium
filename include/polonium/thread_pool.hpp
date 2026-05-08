@@ -12,6 +12,7 @@
 #include <optional>
 #include <stop_token>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "polonium/polonium_logger.hpp"
@@ -24,9 +25,9 @@ class ThreadSafeDeque {
    public:
     ThreadSafeDeque() = default;
     ThreadSafeDeque(const ThreadSafeDeque&) = delete;
-    ThreadSafeDeque(ThreadSafeDeque&&) = delete;
+    ThreadSafeDeque(ThreadSafeDeque&& other) noexcept;
     auto operator=(const ThreadSafeDeque&) -> ThreadSafeDeque& = delete;
-    auto operator=(ThreadSafeDeque&&) -> ThreadSafeDeque& = delete;
+    auto operator=(ThreadSafeDeque&& other) noexcept -> ThreadSafeDeque&;
     ~ThreadSafeDeque() = default;
 
     /**
@@ -72,14 +73,27 @@ class ThreadSafeDeque {
     std::condition_variable cv_;
 };
 
+template <typename T>
+inline ThreadSafeDeque<T>::ThreadSafeDeque(ThreadSafeDeque&& other) noexcept
+    : data_(std::move(other.data_)) {}
+
+template <typename T>
+inline auto ThreadSafeDeque<T>::operator=(ThreadSafeDeque&& other) noexcept
+    -> ThreadSafeDeque& {
+    if (this != &other) {
+        data_ = std::move(other.data_);
+    }
+    return *this;
+}
+
 class ThreadPool {
    public:
     explicit ThreadPool(
         uint32_t workers_amount = std::jthread::hardware_concurrency());
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool(ThreadPool&&) = delete;
-    auto operator=(const ThreadPool&) -> ThreadPool& = delete;
-    auto operator=(ThreadPool&&) -> ThreadPool& = delete;
+    ThreadPool(const ThreadPool&) noexcept = delete;
+    ThreadPool(ThreadPool&& other) noexcept;
+    auto operator=(const ThreadPool&) noexcept -> ThreadPool& = delete;
+    auto operator=(ThreadPool&& other) noexcept -> ThreadPool&;
     ~ThreadPool() { shutdown(); };
 
     /**

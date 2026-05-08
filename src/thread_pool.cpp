@@ -6,6 +6,7 @@
 #include <ranges>
 #include <stop_token>
 #include <thread>
+#include <utility>
 
 #include "polonium/polonium_logger.hpp"
 
@@ -24,6 +25,20 @@ ThreadPool::ThreadPool(uint32_t workers_amount) {
         workers_.emplace_back(
             [this]() -> void { worker_loop(ssource_.get_token()); });
     }
+}
+
+ThreadPool::ThreadPool(ThreadPool&& other) noexcept
+    : tasks_(std::move(other.tasks_)),
+      logger_(other.logger_),
+      workers_(std::move(other.workers_)) {}
+
+auto ThreadPool::operator=(ThreadPool&& other) noexcept -> ThreadPool& {
+    if (this != &other) {
+        tasks_ = std::move(other.tasks_);
+        logger_ = other.logger_;
+        workers_ = std::move(other.workers_);
+    }
+    return *this;
 }
 
 auto ThreadPool::shutdown() -> void {

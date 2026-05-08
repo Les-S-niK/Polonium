@@ -12,21 +12,30 @@
 #include <iterator>
 #include <stdexcept>
 #include <system_error>
+#include <utility>
 
 #include "polonium/polonium_logger.hpp"
+#include "polonium/sockets/socket_config.hpp"
 
-TcpIpv4Socket::TcpIpv4Socket()
-    : logger_(PoloniumLogger::getInstance()),
-      server_fd_(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) {
+TcpIpv4Socket::TcpIpv4Socket(socket_fd server_fd)
+    : server_fd_{server_fd}, logger_(PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->info("TCP/IPv4 socket initialization.");
+}
 
-    if (server_fd_ == -1) {
-        logSocketError_(exception_messages::tcp_socket,
-                        &PoloniumLogger::critical);
-        throw std::runtime_error(exception_messages::tcp_socket);
+TcpIpv4Socket::TcpIpv4Socket(TcpIpv4Socket&& other) noexcept
+    : server_fd_(std::exchange(other.server_fd_, -1)), logger_(other.logger_) {}
+
+auto TcpIpv4Socket::operator=(TcpIpv4Socket&& other) noexcept
+    -> TcpIpv4Socket& {
+    if (this != &other) {
+        if (server_fd_ != -1) {
+            close(server_fd_);
+        }
+        server_fd_ = std::exchange(other.server_fd_, -1);
+        logger_ = other.logger_;
     }
-    logger_->debug("Created TCP/IPv4 socket.");
+    return *this;
 }
 
 TcpIpv4Socket::~TcpIpv4Socket() {
@@ -36,6 +45,25 @@ TcpIpv4Socket::~TcpIpv4Socket() {
         close(server_fd_);
     }
     logger_->debug("Closed TCP/IPv4 socket.");
+}
+
+[[nodiscard]] auto TcpIpv4Socket::createTcpIpv4Socket() noexcept
+    -> std::expected<TcpIpv4Socket, TcpSocketErrors> {
+    PoloniumLogger* logger = nullptr;
+    try {
+        logger = PoloniumLogger::getInstance();
+    } catch (const std::runtime_error&) {
+        return std::unexpected(TcpSocketErrors::TcpSocketInitError);
+    }
+
+    socket_fd server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (server_fd == -1) {
+        logger->critical(exception_messages::tcp_socket);
+        return std::unexpected(TcpSocketErrors::TcpSocketInitError);
+    }
+    TcpIpv4Socket tcp_socket{server_fd};
+    logger->info("Successfully created TCP/IPv4 socket.");
+    return tcp_socket;
 }
 
 auto TcpIpv4Socket::getServerSocketFd() const -> socket_fd {
@@ -50,6 +78,7 @@ auto TcpIpv4Socket::tcpBind(const std::string& host, const uint16_t& port) const
     struct sockaddr_in server_addr{};
     inet_aton(host.c_str(), &server_addr.sin_addr);
     server_addr.sin_port = htons(port);
+
     server_addr.sin_family = AF_INET;
     logger_->debug(std::format(
         "Try binding TCP/IPv4 socket.\nHost: {}\nPort: {}", host, port));
@@ -132,7 +161,7 @@ auto TcpIpv4Socket::tcpRecv(const socket_fd& client_fd, const int flags) const
                 std::error_code(errno, std::generic_category()).value();
             errno_code == EAGAIN or errno_code == EWOULDBLOCK) {
             logSocketError_(exception_messages::tcp_recv_timeout,
-                            &PoloniumLogger::warning);
+                            &PoloniumLogger::debug);
             return std::unexpected(TcpSocketErrors::TcpSocketRecvTimeoutError);
         }
         logSocketError_(exception_messages::tcp_recv, &PoloniumLogger::error);
