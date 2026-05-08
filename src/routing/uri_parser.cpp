@@ -8,10 +8,12 @@
 
 #include "polonium/routing/uri_params.hpp"
 
-UriParser::UriParser(std::string_view uri, std::string_view uri_template)
+polonium::UriParser::UriParser(std::string_view uri,
+                               std::string_view uri_template)
     : uri_(uri), uri_template_(uri_template) {}
 
-auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
+auto polonium::UriParser::getUriParamsByTemplate(
+    parsed_templates params_template) const
     -> std::unordered_map<std::string, UriParamValue> {
     if (params_template.empty()) {
         return {};
@@ -52,10 +54,10 @@ auto UriParser::getUriParamsByTemplate(parsed_templates params_template) const
     return parsed_values;
 }
 
-UriTemplateParser::UriTemplateParser(std::string_view uri_template)
+polonium::UriTemplateParser::UriTemplateParser(std::string_view uri_template)
     : uri_template_(uri_template) {}
 
-auto UriTemplateParser::getUriParamsTemplate() const
+auto polonium::UriTemplateParser::getUriParamsTemplate() const
     -> std::expected<parsed_templates, ParserErrors> {
     // {unsigned section: UtiParamTemplate(string type, string name)}
     parsed_templates path_params;
@@ -82,7 +84,7 @@ auto UriTemplateParser::getUriParamsTemplate() const
     return path_params;
 }
 
-auto UriTemplateParser::validateUriSyntax() const noexcept -> bool {
+auto polonium::UriTemplateParser::validateUriSyntax() const noexcept -> bool {
     if (uri_template_.empty()) {
         return false;
     }
@@ -142,7 +144,8 @@ auto UriTemplateParser::validateUriSyntax() const noexcept -> bool {
     return brace_amount == 0;
 }
 
-auto UriTemplateParser::parseUriTemplate(std::string_view uri_param_template)
+auto polonium::UriTemplateParser::parseUriTemplate(
+    std::string_view uri_param_template)
     -> std::optional<std::pair<std::string, std::string>> {
     using uri_param_types::allowed_types;
 
@@ -162,7 +165,7 @@ auto UriTemplateParser::parseUriTemplate(std::string_view uri_param_template)
     return std::make_pair(type.value(), name.value());
 }
 
-auto UriParser::splitUri(std::string_view uri, char separator)
+auto polonium::UriParser::splitUri(std::string_view uri, char separator)
     -> std::vector<std::string> {
     std::vector<std::string> splitted_uri;
     std::string token;
@@ -180,7 +183,7 @@ auto UriParser::splitUri(std::string_view uri, char separator)
     return splitted_uri;
 }
 
-auto UriParser::tryConvertToInt(const std::string& value) -> bool {
+auto polonium::UriParser::tryConvertToInt(const std::string& value) -> bool {
     size_t pos{};
 
     try {

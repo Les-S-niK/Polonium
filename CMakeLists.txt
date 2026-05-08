@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
-project(polonium CXX)
+project(polonium LANGUAGES CXX C)
 
 add_library(
   polonium
+  # APP ##
+  src/app/polonium.cpp
+  src/app/polonium_config.cpp
+  src/app/polonium_logger.cpp
   # HTTP ##
   src/http/request_parser.cpp
   src/http/response_serializer.cpp
@@ -17,8 +21,6 @@ add_library(
   src/sockets/connection_handler.cpp
   src/sockets/tcp_socket.cpp
   # OTHER MAIN PARTS ##
-  src/polonium.cpp
-  src/polonium_logger.cpp
   src/thread_pool.cpp)
 
 set(CMAKE_CXX_STANDARD 26)

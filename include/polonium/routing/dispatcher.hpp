@@ -10,11 +10,12 @@
 #include <unordered_map>
 #include <utility>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 #include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
+namespace polonium {
 template <typename F, typename Ret, typename... Args>
 concept is_endpoint_handler =
     std::invocable<F, HttpRequest&&> and
@@ -50,13 +51,14 @@ class Dispatcher {
     explicit Dispatcher();
     ~Dispatcher();
 
-    void registerMethod(std::string&& method, std::string&& uri,
+    auto registerMethod(std::string&& method, std::string&& uri,
                         const endpoint_handler& handler,
-                        parsed_templates&& templates);
+                        parsed_templates&& templates) -> void;
     auto checkRoute(const std::string& method, const std::string& uri)
         -> HandlerWithParams<endpoint_handler>;
 
    private:
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
     routes_table routes_;
 };
+}  // namespace polonium

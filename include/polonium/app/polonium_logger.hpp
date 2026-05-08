@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 
+namespace polonium {
 using path = std::filesystem::path;
 
 namespace logger_colors {
@@ -78,3 +79,4 @@ class PoloniumLogger {
     std::mutex logger_mtx_;
     std::fstream log_file_;
 };
+}  // namespace polonium

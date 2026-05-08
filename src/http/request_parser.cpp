@@ -5,113 +5,118 @@
 
 #include <format>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 
-HttpRequestParser::~HttpRequestParser() {
+polonium::HttpRequestParser::~HttpRequestParser() {
     logger_->trace(__func__);
     llhttp_finish(&parser_);
 }
 
-auto HttpRequestParser::getRequest() const -> const HttpRequest& {
+auto polonium::HttpRequestParser::getRequest() const -> const HttpRequest& {
     logger_->trace(__func__);
     return request_;
 }
-auto HttpRequestParser::hasRemainingData() const -> bool {
+auto polonium::HttpRequestParser::hasRemainingData() const -> bool {
     logger_->trace(__func__);
     return parsed_bytes_ < raw_request_.size();
 }
-auto HttpRequestParser::isComplete() const -> bool {
+auto polonium::HttpRequestParser::isComplete() const -> bool {
     logger_->trace(__func__);
     return is_complete_;
 }
-auto HttpRequestParser::isKeepAlive() const -> bool {
+auto polonium::HttpRequestParser::isKeepAlive() const -> bool {
     logger_->trace(__func__);
     return is_keep_alive_;
 }
-void HttpRequestParser::removeParsed() {
+auto polonium::HttpRequestParser::removeParsed() -> void {
     logger_->trace(__func__);
     raw_request_.erase(
         raw_request_.begin(),
         raw_request_.begin() + static_cast<int64_t>(parsed_bytes_));
 }
 
-auto HttpRequestParser::handlerOnMessageBegin(llhttp_t* parser) -> int {
+auto polonium::HttpRequestParser::handlerOnMessageBegin(llhttp_t* parser)
+    -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     // Reset all the fields in the class instance.
     self->reset();
     return 0;
 }
 
-auto HttpRequestParser::handlerOnMethod(llhttp_t* parser, const char* chunk_ptr,
-                                        size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnMethod(llhttp_t* parser,
+                                                  const char* chunk_ptr,
+                                                  size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.method.assign(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnUri(llhttp_t* parser, const char* chunk_ptr,
-                                     size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnUri(llhttp_t* parser,
+                                               const char* chunk_ptr,
+                                               size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.uri.assign(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnProtocol(llhttp_t* parser,
-                                          const char* chunk_ptr, size_t length)
-    -> int {
+auto polonium::HttpRequestParser::handlerOnProtocol(llhttp_t* parser,
+                                                    const char* chunk_ptr,
+                                                    size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.protocol.assign(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnProtocolVersion(llhttp_t* parser,
-                                                 const char* chunk_ptr,
-                                                 size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnProtocolVersion(
+    llhttp_t* parser, const char* chunk_ptr, size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.version.assign(chunk_ptr, length);
     self->is_keep_alive_ = (llhttp_should_keep_alive(parser) != 0);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnHeaderField(llhttp_t* parser,
-                                             const char* chunk_ptr,
-                                             size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnHeaderField(llhttp_t* parser,
+                                                       const char* chunk_ptr,
+                                                       size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->temporary_pair_.first.assign(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnHeaderValue(llhttp_t* parser,
-                                             const char* chunk_ptr,
-                                             size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnHeaderValue(llhttp_t* parser,
+                                                       const char* chunk_ptr,
+                                                       size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->temporary_pair_.second.assign(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnHeaderValueComplete(llhttp_t* parser) -> int {
+auto polonium::HttpRequestParser::handlerOnHeaderValueComplete(llhttp_t* parser)
+    -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.headers.emplace(std::move(self->temporary_pair_));
     self->temporary_pair_ = {};
     return 0;
 }
 
-auto HttpRequestParser::handlerOnBody(llhttp_t* parser, const char* chunk_ptr,
-                                      size_t length) -> int {
+auto polonium::HttpRequestParser::handlerOnBody(llhttp_t* parser,
+                                                const char* chunk_ptr,
+                                                size_t length) -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->request_.body.append(chunk_ptr, length);
     return 0;
 }
 
-auto HttpRequestParser::handlerOnMessageComplete(llhttp_t* parser) -> int {
+auto polonium::HttpRequestParser::handlerOnMessageComplete(llhttp_t* parser)
+    -> int {
     auto* self = static_cast<HttpRequestParser*>(parser->data);
     self->is_complete_ = true;
     return 0;
 }
 
-HttpRequestParser::HttpRequestParser()
-    : logger_(PoloniumLogger::getInstance()) {
+polonium::HttpRequestParser::HttpRequestParser()
+    : logger_(polonium::PoloniumLogger::getInstance()) {
     logger_->trace(__func__);
     logger_->debug("Llhttp Parser initialization.");
     request_ = HttpRequest();
@@ -121,7 +126,7 @@ HttpRequestParser::HttpRequestParser()
     setCallbacks();
 }
 
-auto HttpRequestParser::setCallbacks() -> void {
+auto polonium::HttpRequestParser::setCallbacks() -> void {
     logger_->trace(__func__);
     settings_.on_message_begin = handlerOnMessageBegin;
     settings_.on_method = handlerOnMethod;
@@ -135,7 +140,7 @@ auto HttpRequestParser::setCallbacks() -> void {
     settings_.on_message_complete = handlerOnMessageComplete;
 }
 
-auto HttpRequestParser::reset() -> void {
+auto polonium::HttpRequestParser::reset() -> void {
     logger_->trace(__func__);
     request_ = HttpRequest{};
     temporary_pair_.first.clear();
@@ -145,7 +150,7 @@ auto HttpRequestParser::reset() -> void {
     parsed_bytes_ = 0;
 }
 
-auto HttpRequestParser::feed(std::string_view to_accumulate)
+auto polonium::HttpRequestParser::feed(std::string_view to_accumulate)
     -> HttpRequestParserStatus {
     logger_->trace(__func__);
     parsed_bytes_ = raw_request_.size() - parsed_bytes_;
@@ -163,7 +168,8 @@ auto HttpRequestParser::feed(std::string_view to_accumulate)
     return parseAccumulated();
 }
 
-auto HttpRequestParser::parseAccumulated() -> HttpRequestParserStatus {
+auto polonium::HttpRequestParser::parseAccumulated()
+    -> HttpRequestParserStatus {
     logger_->trace(__func__);
     if (is_complete_) {
         return HttpRequestParserStatus::Complete;

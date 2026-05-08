@@ -3,10 +3,11 @@
 
 #include <string_view>
 
-#include "polonium/polonium_logger.hpp"
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/routing/uri_parser.hpp"
 
+namespace polonium {
 namespace http_methods {
 constexpr const char* get = "GET";
 constexpr const char* post = "POST";
@@ -36,7 +37,7 @@ class PoloniumRouter {
     [[nodiscard]] auto getDefaultUriView() const noexcept -> std::string_view;
     auto setDefaultUri(std::string value) noexcept -> PoloniumRouter&;
 
-    auto includeDispatcher(Dispatcher& dispatcher) noexcept -> void;
+    auto includeDispatcher(Dispatcher& dispatcher) -> void;
 
     auto get(const std::string& uri, endpoint_handler handler) -> void;
     auto post(const std::string& uri, endpoint_handler handler) -> void;
@@ -51,8 +52,9 @@ class PoloniumRouter {
    private:
     std::string default_uri_;
     std::vector<Route> routes_;
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
 
     auto newMethod(const char* method, const std::string& uri,
                    endpoint_handler handler) -> void;
 };
+}  // namespace polonium

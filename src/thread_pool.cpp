@@ -8,9 +8,9 @@
 #include <thread>
 #include <utility>
 
-#include "polonium/polonium_logger.hpp"
+#include "polonium/app/polonium_logger.hpp"
 
-ThreadPool::ThreadPool(uint32_t workers_amount) {
+polonium::ThreadPool::ThreadPool(uint32_t workers_amount) {
     logger_->trace(__func__);
     if (workers_amount == 0) {
         workers_amount = std::jthread::hardware_concurrency();
@@ -27,12 +27,13 @@ ThreadPool::ThreadPool(uint32_t workers_amount) {
     }
 }
 
-ThreadPool::ThreadPool(ThreadPool&& other) noexcept
+polonium::ThreadPool::ThreadPool(ThreadPool&& other) noexcept
     : tasks_(std::move(other.tasks_)),
       logger_(other.logger_),
       workers_(std::move(other.workers_)) {}
 
-auto ThreadPool::operator=(ThreadPool&& other) noexcept -> ThreadPool& {
+auto polonium::ThreadPool::operator=(ThreadPool&& other) noexcept
+    -> ThreadPool& {
     if (this != &other) {
         tasks_ = std::move(other.tasks_);
         logger_ = other.logger_;
@@ -41,7 +42,7 @@ auto ThreadPool::operator=(ThreadPool&& other) noexcept -> ThreadPool& {
     return *this;
 }
 
-auto ThreadPool::shutdown() -> void {
+auto polonium::ThreadPool::shutdown() -> void {
     logger_->trace(__func__);
     if (ssource_.stop_requested()) {
         return;
@@ -51,7 +52,7 @@ auto ThreadPool::shutdown() -> void {
     tasks_.wakeAllThreads();
 }
 
-auto ThreadPool::worker_loop(const std::stop_token& stoken) -> void {
+auto polonium::ThreadPool::worker_loop(const std::stop_token& stoken) -> void {
     while (auto task = tasks_.popFirst(stoken)) {
         task.value()();
     }

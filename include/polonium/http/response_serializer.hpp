@@ -3,9 +3,10 @@
 #include <ctime>
 #include <string>
 
+#include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http.hpp"
-#include "polonium/polonium_logger.hpp"
 
+namespace polonium {
 /**
  * @class HttpResponseSerializer
  * @brief Class uses to Serialize HttpResponse instances to string.
@@ -14,7 +15,8 @@
 class HttpResponseSerializer {
    public:
     explicit HttpResponseSerializer(const HttpResponse& response)
-        : logger_(PoloniumLogger::getInstance()), response_(response) {}
+        : logger_(polonium::PoloniumLogger::getInstance()),
+          response_(response) {}
     HttpResponseSerializer(const HttpResponseSerializer&) = delete;
     HttpResponseSerializer(HttpResponseSerializer&&) = delete;
     auto operator=(const HttpResponseSerializer&)
@@ -36,7 +38,8 @@ class HttpResponseSerializer {
     static auto getCurrentGmtTime() -> std::string;
 
    private:
-    PoloniumLogger* logger_;
+    polonium::PoloniumLogger* logger_;
     const HttpResponse& response_;
     std::string http_response_;
 };
+}  // namespace polonium

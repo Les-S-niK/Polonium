@@ -1,19 +1,19 @@
 
 #include "polonium/http/http.hpp"
 
-[[nodiscard]] auto HttpAction::getJson() const -> json {
+[[nodiscard]] auto polonium::HttpAction::getJson() const -> json {
     return json_actions::parseStringJson(body);
 }
 
-HttpResponse::HttpResponse(const std::string& protocol,
-                           const std::string& version,
-                           const std::pair<const uint16_t, const char*> status)
+polonium::HttpResponse::HttpResponse(
+    const std::string& protocol, const std::string& version,
+    const std::pair<const uint16_t, const char*> status)
     : status_code(status.first), status_text(status.second) {
     this->protocol = protocol;
     this->version = version;
 }
 
-auto response_templates::create404ErrorResponse() -> HttpResponse {
+auto polonium::response_templates::create404ErrorResponse() -> HttpResponse {
     std::string json_str =
         std::format(R"({{"status": "{}", "message": "{}"}})",
                     status_codes::client_errors_4xx::not_found_404.first,
@@ -30,7 +30,7 @@ auto response_templates::create404ErrorResponse() -> HttpResponse {
     return error_404_response;
 }
 
-auto response_templates::get404ErrorResponse() -> HttpResponse {
+auto polonium::response_templates::get404ErrorResponse() -> HttpResponse {
     static HttpResponse error_404_response =
         response_templates::create404ErrorResponse();
     return error_404_response;
