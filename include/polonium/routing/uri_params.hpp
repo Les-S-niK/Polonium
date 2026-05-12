@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace polonium {
@@ -29,6 +30,6 @@ struct UriParamValue {
     UriParamValue(std::string_view type, int value);
 
     std::string_view type;
-    std::string value;
+    std::variant<std::string, int> value;
 };
 }  // namespace polonium

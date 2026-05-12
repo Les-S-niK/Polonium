@@ -5,6 +5,7 @@
 #include <expected>
 #include <optional>
 #include <sstream>
+#include <string>
 
 #include "polonium/routing/uri_params.hpp"
 
@@ -39,9 +40,10 @@ auto polonium::UriParser::getUriParamsByTemplate(
                 if (!tryConvertToInt(splitted_uri[section])) {
                     return {};
                 }
-                parsed_values.emplace(param_template.name,
-                                      UriParamValue(uri_param_types::int_type,
-                                                    splitted_uri[section]));
+                parsed_values.emplace(
+                    param_template.name,
+                    UriParamValue(uri_param_types::int_type,
+                                  std::stoi(splitted_uri[section])));
             } else if (param_template.type == uri_param_types::str_type) {
                 parsed_values.emplace(param_template.name,
                                       UriParamValue(uri_param_types::str_type,
