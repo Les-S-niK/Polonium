@@ -108,7 +108,7 @@ auto polonium::PoloniumLogger::newMessage(std::string_view message,
     log_file_ << current_time << " " << pre_message_text << message << '\n';
 }
 
-auto polonium::PoloniumLogger::getCurrentTime(std::string_view format)
+auto polonium::PoloniumLogger::getCurrentTime(const std::string& format)
     -> std::string {
     constexpr const char* default_time = "00-00-00__00-00-0000";
 
@@ -126,11 +126,10 @@ auto polonium::PoloniumLogger::getCurrentTime(std::string_view format)
     std::array<char, buffer_size> buffer{};
 
     size_t result_size =
-        std::strftime(buffer.data(), buffer_size, format.data(), &datetime);
+        std::strftime(buffer.data(), buffer_size, format.c_str(), &datetime);
     if (result_size == 0) {
         return default_time;
     }
 
-    return {buffer.begin(),
-            std::next(buffer.begin(), static_cast<int64_t>(result_size))};
+    return {buffer.data(), result_size};
 }

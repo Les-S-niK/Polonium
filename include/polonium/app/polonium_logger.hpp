@@ -32,8 +32,8 @@ inline constexpr std::string_view critical = "CRITICAL: ";
 }  // namespace logger_levels_text
 
 namespace logger_date_formats {
-inline constexpr std::string_view filename_format = "%H-%M-%S__%d-%b-%Y";
-inline constexpr std::string_view log_str_format = "%H:%M:%S-%d/%m/%Y";
+inline constexpr const char* filename_format = "%H-%M-%S__%d-%b-%Y";
+inline constexpr const char* log_str_format = "%H:%M:%S-%d/%m/%Y";
 }  // namespace logger_date_formats
 
 enum class LoggerLevels : uint8_t {
@@ -71,7 +71,7 @@ class PoloniumLogger {
     void newMessage(std::string_view message, const LoggerLevels& message_level,
                     std::string_view message_color,
                     std::string_view pre_message_text);
-    static auto getCurrentTime(std::string_view format) -> std::string;
+    static auto getCurrentTime(const std::string& format) -> std::string;
 
     path log_dir_path_;
     path log_file_path_;
