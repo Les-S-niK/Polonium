@@ -1,6 +1,8 @@
 
 #include "polonium/routing/api_responses.hpp"
 
+#include "polonium/json_parser.hpp"
+
 polonium::ApiResponse::ApiResponse(
     std::pair<uint16_t, const char*> status_code,
     std::unordered_map<std::string, std::string> headers)
@@ -44,7 +46,7 @@ auto polonium::JsonResponse::setContent(std::string&& content) -> void {
     content_ = json_actions::parseStringJson(std::move(content));
 }
 auto polonium::JsonResponse::getContent() const -> std::string {
-    return content_.dump();
+    return json_actions::dumpJsonString(content_);
 }
 auto polonium::JsonResponse::appendContent(const std::string&& key,
                                            const std::string&& value) -> void {

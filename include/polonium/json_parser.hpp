@@ -1,18 +1,25 @@
 
-/* This header provides third-party json parser functionallity. */
+/* This header provides interface to access third-party json parsers
+ * functionality. */
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <string_view>
+#include <unordered_map>
 
-using json = nlohmann::json;
-
+using json = std::unordered_map<std::string, std::string>;
 namespace json_actions {
-inline auto parseStringJson(std::string_view str) -> json {
-    if (!json::accept(
-            str)) { /* Return an empty json if body can't be parsed. */
-        return json{};
-    }
+/**
+ * @brief Parse string value to json type.
+ *
+ * @param str: string to be parsed.
+ */
+[[nodiscard]] auto parseStringJson(std::string_view str) -> json;
 
-    return json::parse(str);
-}
+/**
+ * @brief Dump parsed Json to a string.
+ *
+ * @param parsed_json: parsed json to dump.
+ */
+[[nodiscard]] auto dumpJsonString(const json& parsed_json) -> std::string;
+[[nodiscard]] auto dumpJsonString(json&& parsed_json) -> std::string;
 }  // namespace json_actions

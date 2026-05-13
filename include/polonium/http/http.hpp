@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
@@ -247,8 +248,8 @@ struct HttpAction {
     /**
      * @brief Get the Json object from the HTTP body.
      *
-     * @return json (nlohmann::json). Returns an empty json if parser can't
-     * parse the body.
+     * @return json (std::unordered_map<std::string, std::string>). Returns an
+     * empty json if parser can't parse the body.
      */
     [[nodiscard]] auto getJson() const -> json;
 
