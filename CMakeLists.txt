@@ -21,7 +21,8 @@ add_library(
   src/sockets/connection_handler.cpp
   src/sockets/tcp_socket.cpp
   # OTHER MAIN PARTS ##
-  src/thread_pool.cpp)
+  src/thread_pool.cpp
+  src/json_parser.cpp)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
