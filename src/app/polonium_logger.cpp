@@ -1,9 +1,9 @@
 
 #include "polonium/app/polonium_logger.hpp"
 
-#include <array>
-#include <cstdint>
+#include <chrono>
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <print>
 
@@ -110,26 +110,9 @@ auto polonium::PoloniumLogger::newMessage(std::string_view message,
 
 auto polonium::PoloniumLogger::getCurrentTime(const std::string& format)
     -> std::string {
-    constexpr const char* default_time = "00-00-00__00-00-0000";
+    using std::chrono::system_clock;
 
-    std::time_t timestamp = std::time(nullptr);
-    if (timestamp == -1) {
-        return default_time;
-    }
-
-    struct std::tm datetime{};
-    if (localtime_r(&timestamp, &datetime) == nullptr) {
-        return default_time;
-    }
-
-    constexpr size_t buffer_size = 64;
-    std::array<char, buffer_size> buffer{};
-
-    size_t result_size =
-        std::strftime(buffer.data(), buffer_size, format.c_str(), &datetime);
-    if (result_size == 0) {
-        return default_time;
-    }
-
-    return {buffer.data(), result_size};
+    std::chrono::time_point now_time = system_clock::now();
+    return std::vformat(std::format("{{}}", format),
+                        std::make_format_args(now_time));
 }

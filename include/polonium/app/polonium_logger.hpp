@@ -32,8 +32,8 @@ inline constexpr std::string_view critical = "CRITICAL: ";
 }  // namespace logger_levels_text
 
 namespace logger_date_formats {
-inline constexpr const char* filename_format = "%H-%M-%S__%d-%b-%Y";
-inline constexpr const char* log_str_format = "%H:%M:%S-%d/%m/%Y";
+inline constexpr const char* filename_format = "%H-%M-%S__%Y-%m-%d";
+inline constexpr const char* log_str_format = "%T-%F";
 }  // namespace logger_date_formats
 
 enum class LoggerLevels : uint8_t {
