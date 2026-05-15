@@ -1,10 +1,7 @@
 
-#include "polonium/http/http.hpp"
+#include "polonium/http/http_actions.hpp"
 
 #include <format>
-#include <unordered_map>
-
-#include "polonium/json_parser.hpp"
 
 [[nodiscard]] auto polonium::HttpAction::getJson() const -> json {
     return json_actions::parseStringJson(body);
@@ -16,6 +13,19 @@ polonium::HttpResponse::HttpResponse(
     : status_code(status.first), status_text(status.second) {
     this->protocol = protocol;
     this->version = version;
+}
+polonium::HttpResponse::HttpResponse(const ApiResponse& api_response)
+    : HttpResponse(http_options::protocol, http_options::version_1_1,
+                   api_response.getStatusCode()) {
+    headers[http_headers::content_length] =
+        std::to_string(api_response.getContent().size());
+    headers[http_headers::content_type] = "application/json; charset=utf-8";
+
+    for (std::pair<std::string, std::string> header :
+         api_response.getHeaders()) {
+        headers.insert(std::move(header));
+    }
+    body = api_response.getContent();
 }
 
 auto polonium::response_templates::create404ErrorResponse() -> HttpResponse {

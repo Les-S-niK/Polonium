@@ -10,7 +10,7 @@ add_library(
   # HTTP ##
   src/http/request_parser.cpp
   src/http/response_serializer.cpp
-  src/http/http.cpp
+  src/http/http_actions.cpp
   # ROUTING ##
   src/routing/api_responses.cpp
   src/routing/dispatcher.cpp

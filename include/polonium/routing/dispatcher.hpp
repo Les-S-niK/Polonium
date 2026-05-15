@@ -11,7 +11,7 @@
 #include <utility>
 
 #include "polonium/app/polonium_logger.hpp"
-#include "polonium/http/http.hpp"
+#include "polonium/http/http_actions.hpp"
 #include "polonium/routing/api_responses.hpp"
 #include "polonium/routing/uri_parser.hpp"
 

@@ -4,6 +4,9 @@
 
 #include "polonium/app/polonium_config.hpp"
 #include "polonium/app/polonium_logger.hpp"
+#include "polonium/http/http_actions.hpp"
+#include "polonium/http/request_parser.hpp"
+#include "polonium/http/response_serializer.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/tcp_socket.hpp"
 #include "polonium/thread_pool.hpp"
@@ -29,6 +32,14 @@ class ConnectionHandler {
     auto acceptConnection() -> void;
 
    private:
+    auto handleConnection(socket_fd client_fd) -> void;
+    static auto serializeResponseToBuffer(std::string& buffer,
+                                          const HttpResponse& http_response)
+        -> void;
+    auto processParserStatusComplete(HttpRequestParser& request_parser,
+                                     std::string& response_buffer,
+                                     socket_fd client_fd) const -> void;
+
     socket_fd server_fd_;
     std::expected<TcpIpv4Socket, TcpIpv4Socket::TcpSocketErrors> ipv4_socket_;
     polonium::PoloniumApiSettings api_settings_;
@@ -37,7 +48,5 @@ class ConnectionHandler {
     ThreadPool thread_pool_;
     Dispatcher& dispatcher_;
     polonium::PoloniumLogger* logger_;
-
-    auto handleConnection(socket_fd client_fd) -> void;
 };
 }  // namespace polonium

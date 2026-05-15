@@ -96,87 +96,19 @@ auto polonium::ConnectionHandler::acceptConnection() -> void {
 auto polonium::ConnectionHandler::handleConnection(socket_fd client_fd)
     -> void {
     HttpRequestParser request_parser;
-
     while (true) {
         auto buffer = ipv4_socket_.value().tcpRecv(client_fd);
-        if (not buffer.has_value()) {
+        if (not buffer.has_value() or buffer.value().empty()) {
             close(client_fd);
             return;
         }
-        if (buffer.value().empty()) {
-            close(client_fd);
-            return;
-        }
-
         HttpRequestParserStatus parser_status =
             request_parser.feed(buffer.value());
+        std::string response_buffer;
 
         if (parser_status == HttpRequestParserStatus::Complete) {
-            HttpRequest request = request_parser.getRequest();
-            HandlerWithParams handler_with_params =
-                dispatcher_.checkRoute(request.method, request.uri);
-            std::string response_buffer;
-
-            if (!handler_with_params.handler) {
-                // Endpoint not found. Serializing 404 (Not Found) response.
-                logger_->info("Endpoint not found.");
-
-                std::string response =
-                    HttpResponseSerializer(
-                        response_templates::get404ErrorResponse())
-                        .serializeResponse();
-                response_buffer.resize(response.size());
-                response_buffer.assign(response.begin(), response.end());
-            } else {
-                /* Accepted connection to the existing endpoint. Execute
-                 * user's function and serialize a response. Function
-                 * returns ApiResponse subclass object. Move headers and
-                 * body from the object.
-                 */
-                logger_->info("Accepted connection to the existing endpoint.");
-                if (!handler_with_params.path_params.empty()) {
-                    for (auto value : handler_with_params.path_params) {
-                        request.path_params.emplace(value);
-                    }
-                }
-                logger_->debug("Getting API response object.");
-                std::shared_ptr<ApiResponse> api_response =
-                    handler_with_params.handler.value()(std::move(request));
-
-                logger_->debug("Instantiate HttpResponse object.");
-                HttpResponse http_response(http_options::protocol,
-                                           http_options::version_1_1,
-                                           api_response->getStatusCode());
-                http_response.headers[http_headers::content_length] =
-                    std::to_string(api_response->getContent().size());
-                http_response.headers[http_headers::content_type] =
-                    "application/json; charset=utf-8";
-
-                for (std::pair<std::string, std::string> header :
-                     api_response->getHeaders()) {
-                    http_response.headers.insert(std::move(header));
-                }
-                http_response.body = api_response->getContent();
-
-                logger_->debug("Serializing response...");
-                std::string response =
-                    HttpResponseSerializer(http_response).serializeResponse();
-                response_buffer.resize(response.size());
-                response_buffer.assign(response.begin(), response.end());
-            }
-            logger_->debug("Send the response to the client.");
-
-            auto send_result =
-                ipv4_socket_.value().tcpSend(client_fd, response_buffer);
-            if (not send_result.has_value()) {
-                close(client_fd);
-            }
-
-            if (!request_parser.isKeepAlive()) {
-                close(client_fd);
-                return;
-            }
-            request_parser.reset();
+            processParserStatusComplete(request_parser, response_buffer,
+                                        client_fd);
         } else if (parser_status == HttpRequestParserStatus::NeedMore) {
             continue;
         } else {
@@ -185,4 +117,59 @@ auto polonium::ConnectionHandler::handleConnection(socket_fd client_fd)
         }
     }
     close(client_fd);
+}
+auto polonium::ConnectionHandler::serializeResponseToBuffer(
+    std::string& buffer, const HttpResponse& http_response) -> void {
+    std::string response =
+        HttpResponseSerializer(http_response).serializeResponse();
+    buffer.resize(response.size());
+    buffer.assign(response.begin(), response.end());
+}
+auto polonium::ConnectionHandler::processParserStatusComplete(
+    HttpRequestParser& request_parser, std::string& response_buffer,
+    socket_fd client_fd) const -> void {
+    HttpRequest request = request_parser.getRequest();
+    HandlerWithParams handler_with_params =
+        dispatcher_.checkRoute(request.method, request.uri);
+
+    if (!handler_with_params.handler) {
+        // Endpoint not found. Serializing 404 (Not Found) response.
+        logger_->info("Endpoint not found.");
+
+        serializeResponseToBuffer(response_buffer,
+                                  response_templates::get404ErrorResponse());
+    } else {
+        /* Accepted connection to the existing endpoint. Execute
+         * user's function and serialize a response. Function
+         * returns ApiResponse subclass object. Move headers and
+         * body from the object.
+         */
+        logger_->info("Accepted connection to the existing endpoint.");
+        if (not handler_with_params.path_params.empty()) {
+            for (auto value : handler_with_params.path_params) {
+                request.path_params.emplace(value);
+            }
+        }
+        logger_->debug("Getting API response object.");
+        std::shared_ptr<ApiResponse> api_response =
+            handler_with_params.handler.value()(std::move(request));
+
+        logger_->debug("Instantiate HttpResponse object.");
+        HttpResponse http_response(*api_response);
+
+        logger_->debug("Serializing response...");
+        serializeResponseToBuffer(response_buffer, http_response);
+    }
+    logger_->debug("Send the response to the client.");
+
+    auto send_result = ipv4_socket_.value().tcpSend(client_fd, response_buffer);
+    if (not send_result.has_value()) {
+        close(client_fd);
+    }
+
+    if (!request_parser.isKeepAlive()) {
+        close(client_fd);
+        return;
+    }
+    request_parser.reset();
 }
