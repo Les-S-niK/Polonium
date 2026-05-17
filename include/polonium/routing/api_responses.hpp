@@ -34,7 +34,8 @@ class ApiResponse {
 
     virtual auto getContent() const -> std::string = 0;
 
-    auto setStatusCode(std::pair<uint16_t, const char*> status_code) noexcept;
+    auto setStatusCode(std::pair<uint16_t, const char*> status_code) noexcept
+        -> void;
     auto appendHeaders(std::pair<std::string, std::string>&& to_append) -> void;
     auto appendHeaders(std::unordered_map<std::string, std::string>&& to_append)
         -> void;
@@ -61,13 +62,27 @@ class ApiResponseEmptyContent final : public ApiResponse {
     explicit ApiResponseEmptyContent(
         const std::pair<uint16_t, const char*>& status_code =
             status_codes::success_2xx::ok_200);
-    auto getContent() const -> std::string override { return {}; }
+    ApiResponseEmptyContent(const ApiResponseEmptyContent&) = default;
+    ApiResponseEmptyContent(ApiResponseEmptyContent&&) = delete;
+    auto operator=(const ApiResponseEmptyContent&)
+        -> ApiResponseEmptyContent& = default;
+    auto operator=(ApiResponseEmptyContent&&)
+        -> ApiResponseEmptyContent& = delete;
+    ~ApiResponseEmptyContent() override = default;
+
+    auto getContent() const -> std::string override;
 };
 
 class JsonResponse final : public ApiResponseWithContent {
    public:
+    explicit JsonResponse(json content) : content_(std::move(content)) {}
     explicit JsonResponse(const std::pair<uint16_t, const char*>& status_code =
                               status_codes::success_2xx::ok_200);
+    JsonResponse(const JsonResponse&) = default;
+    JsonResponse(JsonResponse&&) noexcept = default;
+    auto operator=(const JsonResponse&) -> JsonResponse& = default;
+    auto operator=(JsonResponse&&) noexcept -> JsonResponse& = default;
+    ~JsonResponse() override = default;
 
     auto setContent(std::string_view content) -> void override;
     auto setContent(std::string&& content) -> void override;

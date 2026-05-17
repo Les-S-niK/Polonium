@@ -13,7 +13,7 @@ auto polonium::ApiResponse::getStatusCode() const noexcept
     return status_code_;
 }
 auto polonium::ApiResponse::setStatusCode(
-    std::pair<uint16_t, const char*> status_code) noexcept {
+    std::pair<uint16_t, const char*> status_code) noexcept -> void {
     status_code_ = status_code;
 }
 auto polonium::ApiResponse::getHeaders() const noexcept
@@ -51,4 +51,12 @@ auto polonium::JsonResponse::getContent() const -> std::string {
 auto polonium::JsonResponse::appendContent(const std::string&& key,
                                            const std::string&& value) -> void {
     content_.emplace(key, value);
+}
+
+polonium::ApiResponseEmptyContent::ApiResponseEmptyContent(
+    const std::pair<uint16_t, const char*>& status_code) {
+    setStatusCode(status_code);
+}
+auto polonium::ApiResponseEmptyContent::getContent() const -> std::string {
+    return {};
 }
