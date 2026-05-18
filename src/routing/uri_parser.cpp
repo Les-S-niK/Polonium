@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 
+#include "polonium/routing/params_parser.hpp"
 #include "polonium/routing/uri_params.hpp"
 
 polonium::UriParser::UriParser(std::string_view uri,
@@ -32,22 +33,44 @@ auto polonium::UriParser::getUriParamsByTemplate(
         auto found_template_it = params_template.find(section);
 
         if (found_template_it != params_template.end()) {
-            const UriParamTemplate& param_template =
-                (found_template_it->second);
+            UriParamTemplate param_template =
+                std::move(found_template_it->second);
 
             // Check if param type is valid.
-            if (param_template.type == uri_param_types::int_type) {
-                if (!tryConvertToInt(splitted_uri[section])) {
-                    return {};
-                }
-                parsed_values.emplace(
-                    param_template.name,
-                    UriParamValue(uri_param_types::int_type,
-                                  std::stoi(splitted_uri[section])));
-            } else if (param_template.type == uri_param_types::str_type) {
+            if (param_template.type == uri_param_types::str_type) {
                 parsed_values.emplace(param_template.name,
                                       UriParamValue(uri_param_types::str_type,
                                                     splitted_uri[section]));
+
+            } else if (param_template.type == uri_param_types::int_type) {
+                std::optional<int64_t> parsed_value =
+                    polonium::params_parser::convertStrToInt64(
+                        splitted_uri[section]);
+                if (not parsed_value.has_value()) {
+                    return {};
+                }
+                appendParsedNumberValue(parsed_values, parsed_value,
+                                        param_template);
+
+            } else if (param_template.type == uri_param_types::uint_type) {
+                std::optional<uint64_t> parsed_value =
+                    polonium::params_parser::convertStrToUint64(
+                        splitted_uri[section]);
+                if (not parsed_value.has_value()) {
+                    return {};
+                }
+                appendParsedNumberValue(parsed_values, parsed_value,
+                                        param_template);
+
+            } else if (param_template.type == uri_param_types::double_type) {
+                std::optional<double> parsed_value =
+                    polonium::params_parser::convertStrToDouble(
+                        splitted_uri[section]);
+                if (not parsed_value.has_value()) {
+                    return {};
+                }
+                appendParsedNumberValue(parsed_values, parsed_value,
+                                        param_template);
             }
         } else if (splitted_uri[section] != splitted_uri_template[section]) {
             return {};
@@ -183,18 +206,4 @@ auto polonium::UriParser::splitUri(std::string_view uri, char separator)
         }
     }
     return splitted_uri;
-}
-
-auto polonium::UriParser::tryConvertToInt(const std::string& value) -> bool {
-    size_t pos{};
-
-    try {
-        std::stoi(value, &pos);
-    } catch (const std::invalid_argument&) {
-        return false;
-    } catch (const std::out_of_range&) {
-        return false;
-    }
-
-    return value.size() == pos;
 }
