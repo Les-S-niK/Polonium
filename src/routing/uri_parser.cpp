@@ -20,7 +20,6 @@ auto polonium::UriParser::getUriParamsByTemplate(
     if (params_template.empty()) {
         return {};
     }
-
     // Split both uri and template uri by default separator.
     std::vector<std::string> splitted_uri = splitUri(uri_);
     std::vector<std::string> splitted_uri_template = splitUri(uri_template_);
@@ -36,7 +35,10 @@ auto polonium::UriParser::getUriParamsByTemplate(
             UriParamTemplate param_template =
                 std::move(found_template_it->second);
 
-            // Check if param type is valid.
+            /* Check if param type is valid.
+             * Now available types are:
+             * str (std::string), int (long), uint (ulong), double (double)
+             * */
             if (param_template.type == uri_param_types::str_type) {
                 parsed_values.emplace(param_template.name,
                                       UriParamValue(uri_param_types::str_type,
@@ -115,7 +117,7 @@ auto polonium::UriTemplateParser::validateUriSyntax() const noexcept -> bool {
     }
     // URI in must starts with "/"
     // Example: /users/123/
-    if (uri_template_.front() != '/') {
+    if (uri_template_.front() != '/' or uri_template_.back() != '/') {
         return false;
     }
     size_t brace_amount = 0;

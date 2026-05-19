@@ -1,6 +1,5 @@
 
 #pragma once
-
 #include <concepts>
 #include <functional>
 #include <memory>
@@ -58,6 +57,8 @@ class Dispatcher {
         -> HandlerWithParams<endpoint_handler>;
 
    private:
+    static auto validateUri(std::string_view uri) noexcept -> bool;
+
     polonium::PoloniumLogger* logger_;
     routes_table routes_;
 };

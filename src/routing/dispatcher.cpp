@@ -2,6 +2,7 @@
 #include "polonium/routing/dispatcher.hpp"
 
 #include <format>
+#include <ranges>
 #include <string_view>
 #include <utility>
 
@@ -39,6 +40,9 @@ auto polonium::Dispatcher::checkRoute(const std::string& method,
     logger_->trace(__func__);
     logger_->info(
         std::format("Check router.\nMethod: {}\nUri: {}", method, uri));
+    if (not validateUri(uri)) {
+        return {};
+    }
 
     if (const auto found_method = routes_.find(method);
         found_method != std::end(routes_)) {
@@ -52,10 +56,10 @@ auto polonium::Dispatcher::checkRoute(const std::string& method,
         // The URI of the method is dynamic or it wasn't found. //
         // Need to search in the table of dynamic URIs. //
         logger_->debug("Static endpoint not found. Checking dynamic URIs.");
+
         for (auto& method : routes_) {
             for (auto& uri_template : method.second) {
                 const parsed_templates templates = uri_template.second.second;
-
                 const auto parsed_values =
                     UriParser(uri, uri_template.first)
                         .getUriParamsByTemplate(templates);
@@ -73,4 +77,7 @@ auto polonium::Dispatcher::checkRoute(const std::string& method,
     logger_->debug(
         std::format("Endpoint not found.\nMethod: {}\nUri: {}", method, uri));
     return {};
+}
+auto polonium::Dispatcher::validateUri(std::string_view uri) noexcept -> bool {
+    return uri.back() == '/';
 }

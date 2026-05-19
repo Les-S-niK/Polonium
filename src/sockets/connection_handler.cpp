@@ -119,9 +119,9 @@ auto polonium::ConnectionHandler::handleConnection(socket_fd client_fd)
     close(client_fd);
 }
 auto polonium::ConnectionHandler::serializeResponseToBuffer(
-    std::string& buffer, const HttpResponse& http_response) -> void {
+    std::string& buffer, HttpResponse&& http_response) -> void {
     std::string response =
-        HttpResponseSerializer(http_response).serializeResponse();
+        HttpResponseSerializer(std::move(http_response)).serializeResponse();
     buffer.resize(response.size());
     buffer.assign(response.begin(), response.end());
 }
@@ -158,7 +158,7 @@ auto polonium::ConnectionHandler::processParserStatusComplete(
         HttpResponse http_response(*api_response);
 
         logger_->debug("Serializing response...");
-        serializeResponseToBuffer(response_buffer, http_response);
+        serializeResponseToBuffer(response_buffer, std::move(http_response));
     }
     logger_->debug("Send the response to the client.");
 

@@ -34,8 +34,7 @@ class ConnectionHandler {
    private:
     auto handleConnection(socket_fd client_fd) -> void;
     static auto serializeResponseToBuffer(std::string& buffer,
-                                          const HttpResponse& http_response)
-        -> void;
+                                          HttpResponse&& http_response) -> void;
     auto processParserStatusComplete(HttpRequestParser& request_parser,
                                      std::string& response_buffer,
                                      socket_fd client_fd) const -> void;
