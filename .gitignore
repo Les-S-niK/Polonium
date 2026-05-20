@@ -5,7 +5,6 @@ CMakeFiles/
 .vscode
 .cache
 .github_token
-examples/
 CMakeCache.txt
 *.json
 cmake_install.cmake
