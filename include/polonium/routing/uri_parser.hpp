@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <expected>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -51,9 +50,15 @@ class UriParser {
         -> std::vector<std::string>;
 
    private:
-    [[nodiscard]]
-    static auto tryConvertToInt(const std::string& value) -> bool;
-
+    template <typename T>
+    static auto appendParsedNumberValue(
+        std::unordered_map<std::string, UriParamValue>& parsed_templates,
+        const std::optional<T>& parsed_value,
+        const UriParamTemplate& param_template) -> void {
+        parsed_templates.emplace(
+            param_template.name,
+            UriParamValue(param_template.type, parsed_value.value()));
+    }
     std::string_view uri_;
     std::string_view uri_template_;
 };

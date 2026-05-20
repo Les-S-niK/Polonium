@@ -1,6 +1,5 @@
 
 #pragma once
-
 #include <concepts>
 #include <functional>
 #include <memory>
@@ -23,9 +22,14 @@ concept is_endpoint_handler =
 
 using endpoint_handler =
     std::function<std::shared_ptr<ApiResponse>(HttpRequest&&)>;
+
+/* Routes table is a routes storage in the format:
+ * { METHOD: [{"URI": {endpoint_handler, parsed_templates}}]}
+ */
 using routes_table = std::unordered_map<
-    std::string, std::unordered_map<std::string, std::pair<endpoint_handler,
-                                                           parsed_templates>>>;
+    std::string,
+    std::vector<
+        std::pair<std::string, std::pair<endpoint_handler, parsed_templates>>>>;
 
 template <is_endpoint_handler<std::shared_ptr<ApiResponse>, HttpRequest&&> F>
 struct HandlerWithParams {
@@ -58,6 +62,8 @@ class Dispatcher {
         -> HandlerWithParams<endpoint_handler>;
 
    private:
+    static auto validateUri(std::string_view uri) noexcept -> bool;
+
     polonium::PoloniumLogger* logger_;
     routes_table routes_;
 };

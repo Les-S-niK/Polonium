@@ -1,6 +1,11 @@
 
 #include "polonium/http/response_serializer.hpp"
 
+polonium::HttpResponseSerializer::HttpResponseSerializer(
+    HttpResponse&& response)
+    : logger_(polonium::PoloniumLogger::getInstance()),
+      response_(std::move(response)) {}
+
 [[nodiscard]] auto polonium::HttpResponseSerializer::serializeResponse() const
     -> std::string {
     logger_->trace(__func__);

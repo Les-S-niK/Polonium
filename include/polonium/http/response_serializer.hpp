@@ -14,9 +14,7 @@ namespace polonium {
  */
 class HttpResponseSerializer {
    public:
-    explicit HttpResponseSerializer(const HttpResponse& response)
-        : logger_(polonium::PoloniumLogger::getInstance()),
-          response_(response) {}
+    explicit HttpResponseSerializer(HttpResponse&& response);
     HttpResponseSerializer(const HttpResponseSerializer&) = delete;
     HttpResponseSerializer(HttpResponseSerializer&&) = delete;
     auto operator=(const HttpResponseSerializer&)
@@ -39,7 +37,7 @@ class HttpResponseSerializer {
 
    private:
     polonium::PoloniumLogger* logger_;
-    const HttpResponse& response_;
+    HttpResponse response_;
     std::string http_response_;
 };
 }  // namespace polonium

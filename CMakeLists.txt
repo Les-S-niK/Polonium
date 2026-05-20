@@ -14,6 +14,7 @@ add_library(
   # ROUTING ##
   src/routing/api_responses.cpp
   src/routing/dispatcher.cpp
+  src/routing/params_parser.cpp
   src/routing/uri_parser.cpp
   src/routing/uri_params.cpp
   src/routing/polonium_router.cpp
