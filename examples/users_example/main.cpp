@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <polonium/app/polonium.hpp>
 #include <polonium/sockets/connection_handler.hpp>
-#include <thread>
 #include <utility>
 
 #include "include/users_router.hpp"

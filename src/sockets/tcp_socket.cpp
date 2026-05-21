@@ -14,7 +14,6 @@
 #include <system_error>
 #include <utility>
 
-#include "polonium/app/polonium_config.hpp"
 #include "polonium/app/polonium_logger.hpp"
 
 polonium::TcpIpv4Socket::TcpIpv4Socket(socket_fd server_fd)
