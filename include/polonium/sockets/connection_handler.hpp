@@ -6,12 +6,9 @@
 #include "polonium/app/polonium_logger.hpp"
 #include "polonium/http/http_actions.hpp"
 #include "polonium/http/request_parser.hpp"
-#include "polonium/http/response_serializer.hpp"
 #include "polonium/routing/dispatcher.hpp"
 #include "polonium/sockets/tcp_socket.hpp"
 #include "polonium/thread_pool.hpp"
-
-// TODO: lessnik - Implement IPv6 support in future.
 
 namespace polonium {
 class ConnectionHandler {

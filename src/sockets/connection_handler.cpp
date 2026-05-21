@@ -27,7 +27,6 @@ auto sigintHandler([[maybe_unused]] int /* unused */) {
 }
 }  // namespace
 
-// TODO: lessnik - Implement IPv6 support in future.
 polonium::ConnectionHandler::ConnectionHandler(
     const polonium::PoloniumApiSettings& api_settings,
     const polonium::PoloinumSocketSettings& socket_settings,
