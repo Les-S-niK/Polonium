@@ -13,13 +13,11 @@ auto main() -> int {
 
     constexpr uint16_t max_backlog_size = 512;
     constexpr uint8_t timeout_seconds = 10;
-    const uint8_t hardware_concurrency = std::jthread::hardware_concurrency();
 
     polonium::PoloniumApiSettings api_settings{host, port};
     polonium::PoloniumLoggerSettings logger_settings{
         "./logs", polonium::LoggerLevels::Trace};
-    polonium::PoloniumThreadPoolSettings thread_pool_settings{
-        hardware_concurrency};
+    polonium::PoloniumThreadPoolSettings thread_pool_settings{};
     polonium::PoloinumSocketSettings socket_settings{max_backlog_size,
                                                      timeout_seconds};
 

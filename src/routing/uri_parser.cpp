@@ -115,7 +115,7 @@ auto polonium::UriTemplateParser::validateUriSyntax() const noexcept -> bool {
     if (uri_template_.empty()) {
         return false;
     }
-    // URI in must starts with "/"
+    // URI must start with "/"
     // Example: /users/123/
     if (uri_template_.front() != '/' or uri_template_.back() != '/') {
         return false;

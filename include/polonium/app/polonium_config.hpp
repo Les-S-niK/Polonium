@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <string_view>
+#include <thread>
 
 #include "polonium/app/polonium_logger.hpp"
 
@@ -53,7 +54,9 @@ class PoloniumLoggerSettings {
 
 class PoloniumThreadPoolSettings {
    public:
-    explicit PoloniumThreadPoolSettings(uint16_t workers_amount) noexcept;
+    explicit PoloniumThreadPoolSettings(
+        uint16_t workers_amount =
+            std::jthread::hardware_concurrency()) noexcept;
     PoloniumThreadPoolSettings(const PoloniumThreadPoolSettings&) = default;
     PoloniumThreadPoolSettings(PoloniumThreadPoolSettings&&) = default;
     auto operator=(const PoloniumThreadPoolSettings&)

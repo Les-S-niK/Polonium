@@ -1,6 +1,7 @@
 
 #include "polonium/routing/polonium_router.hpp"
 
+#include <exception>
 #include <utility>
 
 #include "polonium/app/polonium_logger.hpp"
@@ -40,6 +41,14 @@ auto polonium::PoloniumRouter::includeDispatcher(Dispatcher& dispatcher)
     -> void {
     logger_->trace(__func__);
     for (auto& [method, uri, handler, templates] : routes_) {
+        UriTemplateParser template_parser{uri};
+        auto uri_params = template_parser.getUriParamsTemplate();
+        if (not uri_params.has_value()) {
+            logger_->critical(std::format(
+                "Could not parse URI template.\nMethod: {}, Uri template: {}",
+                method, uri));
+            std::terminate();
+        }
         dispatcher.registerMethod(std::move(method), std::move(uri), handler,
                                   std::move(templates));
     }
