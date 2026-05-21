@@ -28,12 +28,11 @@ add_library(
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(nlohmann_json REQUIRED)
+find_package(glaze REQUIRED)
 find_package(llhttp REQUIRED)
 find_package(ctre REQUIRED)
 
-target_link_libraries(polonium PUBLIC nlohmann_json::nlohmann_json
-                                      llhttp::llhttp ctre::ctre)
+target_link_libraries(polonium PUBLIC glaze::glaze llhttp::llhttp ctre::ctre)
 
 target_include_directories(
   polonium PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
