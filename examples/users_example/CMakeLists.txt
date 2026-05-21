@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(polonium REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(glaze REQUIRED)
 find_package(llhttp REQUIRED)
 find_package(ctre REQUIRED)
 

@@ -4,7 +4,7 @@ from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 class PoloniumRecipe(ConanFile):
     name = "polonium"
-    version = "0.16.0"
+    version = "0.17.0"
     package_type = "library"
 
     # Optional metadata
@@ -25,7 +25,7 @@ class PoloniumRecipe(ConanFile):
     def requirements(self):
         self.requires("llhttp/9.3.0", transitive_headers=True)
         self.requires("ctre/3.10.0", transitive_headers=True)
-        self.requires("nlohmann_json/3.12.0", transitive_headers=True)
+        self.requires("glaze/7.4.0", transitive_headers=True)
 
     def config_options(self):
         if self.settings.os == "Windows":
