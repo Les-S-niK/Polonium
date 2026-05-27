@@ -1,9 +1,51 @@
 
 #include "users_router.hpp"
 
+#include <ctre/functions.hpp>
+#include <glaze/json/generic.hpp>
+#include <memory>
+#include <polonium/json_parser.hpp>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+// TODO: lessnik - Implement JsonResponse method that takes body
+// from converted ODT.
+
+namespace {
+
+auto getHttp422Error() -> std::shared_ptr<polonium::JsonResponse> {
+    static auto http422error = std::make_shared<polonium::JsonResponse>(
+        polonium::json_actions::json{{"Error", "Unprocessable Entity 422"}},
+        polonium::status_codes::client_errors_4xx::unprocessable_entity_422);
+
+    return http422error;
+}
+}  // namespace
+
 users_router::UsersRouter::UsersRouter() : polonium::PoloniumRouter("/users") {
     get("/{uint id}/{str name}/", getUserData);
     get("/{str name}/", greetUser);
+    post("/{str name}/", signUpUser);
+}
+
+auto users_router::UsersRouter::signUpUser(polonium::HttpRequest&& request)
+    -> std::shared_ptr<JsonResponse> {
+    using polonium::json_actions::convertJsonStringAggregate;
+
+    std::string username =
+        std::get<std::string>(request.path_params.at("name").value);
+    std::optional<SignUpUserModel> sign_up_model =
+        convertJsonStringAggregate<SignUpUserModel>(std::move(request.body));
+    if (not sign_up_model.has_value()) {
+        return getHttp422Error();
+    }
+    JsonResponse response{};
+    SignUpUserResponseModel response_model{
+        .greetings = std::format("Hello, {}", std::move(username)),
+        .age = sign_up_model->age};
+    response.appendContent(std::move(response_model));
+    return std::make_shared<JsonResponse>(response);
 }
 
 auto users_router::UsersRouter::getUserData(polonium::HttpRequest&& request)
@@ -24,13 +66,13 @@ auto users_router::UsersRouter::greetUser(polonium::HttpRequest&& request)
     std::string name =
         std::get<std::string>(request.path_params.at("name").value);
 
-    json parsed_body = json_actions::parseStringJson(std::move(request.body));
+    polonium::json_actions::json parsed_body =
+        polonium::json_actions::parseStringJson(std::move(request.body));
     if (parsed_body.empty() or not parsed_body.contains("message")) {
-        JsonResponse response{unprocessable_entity_422};
-        response.appendContent("error", "unprocessable_entity_422");
-        return std::make_shared<JsonResponse>(response);
+        return getHttp422Error();
     }
-    std::string message = std::move(parsed_body.at("message"));
+    std::string message =
+        std::move(parsed_body.at("message").get<std::string>());
 
     JsonResponse response{};
     response.appendContent("Greetings",

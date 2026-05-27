@@ -3,7 +3,7 @@
 
 #include <format>
 
-[[nodiscard]] auto polonium::HttpAction::getJson() const -> json {
+[[nodiscard]] auto polonium::HttpAction::getJson() const -> json_actions::json {
     return json_actions::parseStringJson(body);
 }
 

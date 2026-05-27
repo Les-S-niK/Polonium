@@ -1,6 +1,7 @@
 
 #include <cstdint>
 #include <polonium/app/polonium.hpp>
+#include <polonium/json_parser.hpp>
 #include <polonium/sockets/connection_handler.hpp>
 #include <utility>
 

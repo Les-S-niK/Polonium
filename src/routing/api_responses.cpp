@@ -39,6 +39,13 @@ polonium::JsonResponse::JsonResponse(
     const std::pair<uint16_t, const char*>& status_code) {
     setStatusCode(status_code);
 }
+polonium::JsonResponse::JsonResponse(
+    json_actions::json&& content,
+    const std::pair<uint16_t, const char*>& status_code)
+    : JsonResponse(status_code) {
+    content_ = std::move(content);
+}
+
 auto polonium::JsonResponse::setContent(std::string_view content) -> void {
     content_ = json_actions::parseStringJson(content);
 }

@@ -75,23 +75,38 @@ class ApiResponseEmptyContent final : public ApiResponse {
 
 class JsonResponse final : public ApiResponseWithContent {
    public:
-    explicit JsonResponse(json content) : content_(std::move(content)) {}
     explicit JsonResponse(const std::pair<uint16_t, const char*>& status_code =
                               status_codes::success_2xx::ok_200);
+    explicit JsonResponse(json_actions::json&& content,
+                          const std::pair<uint16_t, const char*>& status_code =
+                              status_codes::success_2xx::ok_200);
+
     JsonResponse(const JsonResponse&) = default;
     JsonResponse(JsonResponse&&) noexcept = default;
     auto operator=(const JsonResponse&) -> JsonResponse& = default;
     auto operator=(JsonResponse&&) noexcept -> JsonResponse& = default;
     ~JsonResponse() override = default;
 
+    template <polonium::json_actions::is_trivially_aggregate Aggregate>
+    auto setContent(Aggregate object) {
+        content_ =
+            polonium::json_actions::convertAggregateJson(std::move(object));
+    }
     auto setContent(std::string_view content) -> void override;
     auto setContent(std::string&& content) -> void override;
+
+    template <polonium::json_actions::is_trivially_aggregate Aggregate>
+    auto appendContent(Aggregate object) {
+        content_.merge(
+            polonium::json_actions::convertAggregateJson(std::move(object)));
+    }
+
     auto appendContent(const std::string&& key, const std::string&& value)
         -> void;
 
     auto getContent() const -> std::string override;
 
    private:
-    json content_;
+    json_actions::json content_;
 };
 }  // namespace polonium

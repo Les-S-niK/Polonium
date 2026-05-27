@@ -16,20 +16,24 @@ def test_get_user_data(user_id_in: int, user_name_in: str) -> None:
 
 
 @mark.parametrize(
-    "name_in,message_in",
+    "name_in,password_in,age_in",
     [
-        ("Alex", "mass"),
-        ("Text", "description"),
-        ("Test", "very long long long long long long long long long long description"),
+        ("Alex", "mass", 10),
+        ("Text", "description", 100),
+        (
+            "Test",
+            "very long long long long long long long long long long description",
+            200,
+        ),
     ],
 )
-def test_greet_user(name_in: str, message_in: str) -> None:
+def test_greet_user(name_in: str, password_in: str, age_in: int) -> None:
     URI: str = f"http://0.0.0.0:8080/users/{name_in}/"
-    response: Response = get(URI, json={"message": message_in})
+    response: Response = get(URI, json={"password": password_in, "age": age_in})
     assert response.status_code == 200
     json_response: dict[str, str] = response.json()
-    assert json_response.get("Greetings") == f"Hello, {name_in}"
-    assert json_response.get("Message") == message_in
+    assert json_response.get("greetings") == f"Hello, {name_in}"
+    assert json_response.get("age") == age_in
 
 
 @mark.parametrize(
