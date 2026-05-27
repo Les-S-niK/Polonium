@@ -23,7 +23,7 @@ struct HttpAction {
      * @return json (std::unordered_map<std::string, std::string>). Returns an
      * empty json if parser can't parse the body.
      */
-    [[nodiscard]] auto getJson() const -> json;
+    [[nodiscard]] auto getJson() const -> json_actions::json;
 
     /**
      * @brief Main protocol name. (HTTP)
