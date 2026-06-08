@@ -2,7 +2,6 @@
 #pragma once
 
 #include <cstdint>
-#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <mutex>

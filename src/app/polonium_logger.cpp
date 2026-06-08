@@ -2,7 +2,6 @@
 #include "polonium/app/polonium_logger.hpp"
 
 #include <chrono>
-#include <cstring>
 #include <format>
 #include <iostream>
 #include <print>

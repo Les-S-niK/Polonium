@@ -2,7 +2,6 @@
 #include "polonium/routing/dispatcher.hpp"
 
 #include <format>
-#include <optional>
 #include <ranges>
 #include <string_view>
 #include <utility>

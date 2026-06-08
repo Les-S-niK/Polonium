@@ -9,9 +9,6 @@
 #include <unordered_map>
 #include <utility>
 
-// TODO: lessnik - Implement JsonResponse method that takes body
-// from converted ODT.
-
 namespace {
 
 auto getHttp422Error() -> std::shared_ptr<polonium::JsonResponse> {
@@ -31,12 +28,12 @@ users_router::UsersRouter::UsersRouter() : polonium::PoloniumRouter("/users") {
 
 auto users_router::UsersRouter::signUpUser(polonium::HttpRequest&& request)
     -> std::shared_ptr<JsonResponse> {
-    using polonium::json_actions::convertJsonStringAggregate;
+    using polonium::dto::toAggregate;
 
     std::string username =
         std::get<std::string>(request.path_params.at("name").value);
     std::optional<SignUpUserModel> sign_up_model =
-        convertJsonStringAggregate<SignUpUserModel>(std::move(request.body));
+        toAggregate<SignUpUserModel>(std::move(request.body));
     if (not sign_up_model.has_value()) {
         return getHttp422Error();
     }
@@ -67,7 +64,7 @@ auto users_router::UsersRouter::greetUser(polonium::HttpRequest&& request)
         std::get<std::string>(request.path_params.at("name").value);
 
     polonium::json_actions::json parsed_body =
-        polonium::json_actions::parseStringJson(std::move(request.body));
+        polonium::json_actions::stringToJson(std::move(request.body));
     if (parsed_body.empty() or not parsed_body.contains("message")) {
         return getHttp422Error();
     }

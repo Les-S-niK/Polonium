@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "polonium/dto.hpp"
 #include "polonium/http/http.hpp"
 #include "polonium/json_parser.hpp"
 
@@ -87,18 +88,16 @@ class JsonResponse final : public ApiResponseWithContent {
     auto operator=(JsonResponse&&) noexcept -> JsonResponse& = default;
     ~JsonResponse() override = default;
 
-    template <polonium::json_actions::is_trivially_aggregate Aggregate>
+    template <polonium::dto::is_trivially_aggregate Aggregate>
     auto setContent(Aggregate object) {
-        content_ =
-            polonium::json_actions::convertAggregateJson(std::move(object));
+        content_ = polonium::dto::toJson(std::move(object));
     }
     auto setContent(std::string_view content) -> void override;
     auto setContent(std::string&& content) -> void override;
 
-    template <polonium::json_actions::is_trivially_aggregate Aggregate>
+    template <polonium::dto::is_trivially_aggregate Aggregate>
     auto appendContent(Aggregate object) {
-        content_.merge(
-            polonium::json_actions::convertAggregateJson(std::move(object)));
+        content_.merge(polonium::dto::toJson(std::move(object)));
     }
 
     auto appendContent(const std::string&& key, const std::string&& value)

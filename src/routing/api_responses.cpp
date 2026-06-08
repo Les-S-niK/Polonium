@@ -47,13 +47,13 @@ polonium::JsonResponse::JsonResponse(
 }
 
 auto polonium::JsonResponse::setContent(std::string_view content) -> void {
-    content_ = json_actions::parseStringJson(content);
+    content_ = json_actions::stringToJson(content);
 }
 auto polonium::JsonResponse::setContent(std::string&& content) -> void {
-    content_ = json_actions::parseStringJson(std::move(content));
+    content_ = json_actions::stringToJson(std::move(content));
 }
 auto polonium::JsonResponse::getContent() const -> std::string {
-    return json_actions::dumpJsonString(content_);
+    return json_actions::jsonToString(content_);
 }
 auto polonium::JsonResponse::appendContent(const std::string&& key,
                                            const std::string&& value) -> void {

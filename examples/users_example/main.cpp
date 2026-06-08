@@ -16,7 +16,7 @@ auto main() -> int {
 
     polonium::PoloniumApiSettings api_settings{host, port};
     polonium::PoloniumLoggerSettings logger_settings{
-        "./logs", polonium::LoggerLevels::Trace};
+        "./logs", polonium::LoggerLevels::Warning};
     polonium::PoloniumThreadPoolSettings thread_pool_settings{};
     polonium::PoloinumSocketSettings socket_settings{max_backlog_size,
                                                      timeout_seconds};

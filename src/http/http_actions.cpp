@@ -4,7 +4,7 @@
 #include <format>
 
 [[nodiscard]] auto polonium::HttpAction::getJson() const -> json_actions::json {
-    return json_actions::parseStringJson(body);
+    return json_actions::stringToJson(body);
 }
 
 polonium::HttpResponse::HttpResponse(
