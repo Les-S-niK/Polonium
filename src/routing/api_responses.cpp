@@ -1,6 +1,8 @@
 
 #include "polonium/routing/api_responses.hpp"
 
+#include <glaze/json/generic.hpp>
+
 #include "polonium/json_parser.hpp"
 
 polonium::ApiResponse::ApiResponse(
@@ -52,12 +54,17 @@ auto polonium::JsonResponse::setContent(std::string_view content) -> void {
 auto polonium::JsonResponse::setContent(std::string&& content) -> void {
     content_ = json_actions::stringToJson(std::move(content));
 }
+auto polonium::JsonResponse::operator[](const std::string& str)
+    -> glz::generic& {
+    return content_[str];
+}
+
 auto polonium::JsonResponse::getContent() const -> std::string {
     return json_actions::jsonToString(content_);
 }
-auto polonium::JsonResponse::appendContent(const std::string&& key,
-                                           const std::string&& value) -> void {
-    content_.emplace(key, value);
+auto polonium::JsonResponse::appendContent(std::string&& key,
+                                           std::string&& value) -> void {
+    content_.emplace(std::move(key), std::move(value));
 }
 
 polonium::ApiResponseEmptyContent::ApiResponseEmptyContent(

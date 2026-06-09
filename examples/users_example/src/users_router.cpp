@@ -5,6 +5,7 @@
 #include <glaze/json/generic.hpp>
 #include <memory>
 #include <polonium/json_parser.hpp>
+#include <print>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -41,6 +42,7 @@ auto users_router::UsersRouter::signUpUser(polonium::HttpRequest&& request)
     SignUpUserResponseModel response_model{
         .greetings = std::format("Hello, {}", std::move(username)),
         .age = sign_up_model->age};
+
     response.appendContent(std::move(response_model));
     return std::make_shared<JsonResponse>(response);
 }
@@ -53,8 +55,11 @@ auto users_router::UsersRouter::getUserData(polonium::HttpRequest&& request)
         std::get<std::string>(std::move(request.path_params.at("name").value));
 
     polonium::JsonResponse response{};
-    response.appendContent("id", std::to_string(user_id));
-    response.appendContent("name", std::move(user_name));
+    response["id"] = std::to_string(user_id);
+    response["name"] = std::move(user_name);
+
+    // response.appendContent("id", std::to_string(user_id));
+    // response.appendContent("name", std::move(user_name));
     return std::make_shared<polonium::JsonResponse>(response);
 }
 
@@ -72,8 +77,10 @@ auto users_router::UsersRouter::greetUser(polonium::HttpRequest&& request)
         std::move(parsed_body.at("message").get<std::string>());
 
     JsonResponse response{};
-    response.appendContent("Greetings",
-                           std::format("Hello, {}", std::move(name)));
-    response.appendContent("Message", std::move(message));
+    response["Greetings"] = std::format("Hello, {}", std::move(name));
+    response["Message"] = std::move(message);
+    // response.appendContent("Greetings",
+    // std::format("Hello, {}", std::move(name)));
+    // response.appendContent("Message", std::move(message));
     return std::make_shared<JsonResponse>(response);
 }

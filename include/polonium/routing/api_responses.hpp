@@ -95,13 +95,12 @@ class JsonResponse final : public ApiResponseWithContent {
     auto setContent(std::string_view content) -> void override;
     auto setContent(std::string&& content) -> void override;
 
+    auto operator[](const std::string& str) -> glz::generic&;
+    auto appendContent(std::string&& key, std::string&& value) -> void;
     template <polonium::dto::is_trivially_aggregate Aggregate>
-    auto appendContent(Aggregate object) {
+    auto appendContent(Aggregate object) -> void {
         content_.merge(polonium::dto::toJson(std::move(object)));
     }
-
-    auto appendContent(const std::string&& key, const std::string&& value)
-        -> void;
 
     auto getContent() const -> std::string override;
 
