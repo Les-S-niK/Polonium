@@ -6,7 +6,7 @@ class TestHelloConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     def requirements(self):
-        self.requires("polonium/1.1.0")
+        self.requires("polonium/1.1.2")
 
     def layout(self):
         cmake_layout(self)
