@@ -1,5 +1,6 @@
 # Polonium
-Polonium is a studying-oriented C++ Web HTTP-JSON API Framework. Now in developing.
+Polonium is a studying-oriented C++ Web HTTP-JSON API Framework. Developing finished. 
+There will be a new version of the project in my repositories named "Plonarium".
 
 # This project uses third-party libraries:
 stephenberry/glaze (Copyright (c) 2019 - present, Stephen Berry) MIT <br>
