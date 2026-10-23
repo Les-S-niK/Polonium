@@ -34,9 +34,11 @@ Compile-time Reg-ex:
 
 ## Installation:
 
+```sh
 git pull https://github.com/Les-S-niK/Polonium.git
 conan install . --build=missing
 conan create .
+```
 
 ## Usage
 
