@@ -5,7 +5,6 @@
 #include <glaze/json/generic.hpp>
 #include <memory>
 #include <polonium/json_parser.hpp>
-#include <print>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -58,8 +57,6 @@ auto users_router::UsersRouter::getUserData(polonium::HttpRequest&& request)
     response["id"] = std::to_string(user_id);
     response["name"] = std::move(user_name);
 
-    // response.appendContent("id", std::to_string(user_id));
-    // response.appendContent("name", std::move(user_name));
     return std::make_shared<polonium::JsonResponse>(response);
 }
 

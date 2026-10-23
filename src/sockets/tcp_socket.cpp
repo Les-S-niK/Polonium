@@ -1,7 +1,6 @@
 #include "polonium/sockets/tcp_socket.hpp"
 
 #include <arpa/inet.h>
-#include <asm-generic/socket.h>
 #include <sys/socket.h>
 #include <unistd.h>
 

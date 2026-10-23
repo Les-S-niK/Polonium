@@ -58,7 +58,7 @@ class ThreadSafeDeque {
         if (data_.empty() and stoken.stop_requested()) {
             return std::nullopt;
         }
-        T value = std::move(data_.front());
+        T value = data_.front();
         data_.pop_front();
         return value;
     }

@@ -1,7 +1,6 @@
 
 #include "polonium/sockets/connection_handler.hpp"
 
-#include <asm-generic/socket.h>
 #include <sys/socket.h>
 
 #include <atomic>
@@ -73,9 +72,11 @@ auto polonium::ConnectionHandler::acceptConnection() -> void {
             continue;
         }
         socket_fd client_fd = accepted_pair.value().first;
-        struct timeval time_value = {.tv_sec = static_cast<__time_t>(
-                                         socket_settings_.getTimeoutSeconds()),
-                                     .tv_usec = 0};
+        struct timeval time_value = {
+            .tv_sec =
+                static_cast<__time_t>(socket_settings_.getTimeoutSeconds()),
+            .tv_usec = 0,
+        };
 
         if (setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, &time_value,
                        sizeof(time_value)) < 0 or
